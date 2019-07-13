@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
 		if (strcmp(argv[a], "-verbose") == 0)
 			verbose = 1;
 		else
-			printf("Uknown argument '%s'\n", argv[a]);
+			printf("Unknown argument '%s'\n", argv[a]);
 	}
 
 	// List test functions
