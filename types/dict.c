@@ -1,5 +1,6 @@
 //
 // Created by Adam Hedges on 2019-07-11.
+// The dictionary data structure is implemented as an AVL tree
 //
 
 #include <stdlib.h>
@@ -10,8 +11,8 @@
 #include "list.h"
 
 
-Dict* dict_init(KeyTypes keytype) {
-	Dict* d = malloc(sizeof(Dict));
+DictNode* dict_init(KeyTypes keytype) {
+	DictNode* d = malloc(sizeof(DictNode));
 	d->count = 0;
 	d->keyType = keytype;
 	d->key = NULL;
@@ -32,64 +33,64 @@ Dict* dict_init(KeyTypes keytype) {
 	return d;
 }
 
-void dict_add_item(Dict* dict, void* key, void* value) {
-	if (dict->key == NULL) {
-		dict->key = key;
-		dict->value = value;
-		dict->count++;
+void dict_add_item(DictNode* root, void* key, void* value) {
+	if (root->key == NULL) {
+		root->key = key;
+		root->value = value;
+		root->count++;
 		return;
 	}
 
-	Dict** parent = NULL;
-	Dict** d = &dict;
-	while (*d != NULL) {
-		parent = d;
-		d = (dict->compare(key, (*d)->key) < 0) ? &(*d)->left : &(*d)->right;
+	DictNode** parent = NULL;
+	DictNode** newnode = &root;
+	while (*newnode != NULL) {
+		parent = newnode;
+		newnode = (root->compare(key, (*newnode)->key) < 0) ? &(*newnode)->left : &(*newnode)->right;
 	}
 
-	*d = dict_init(dict->keyType);
-	(*d)->key = key;
-	(*d)->value = value;
+	*newnode = dict_init(root->keyType);
+	(*newnode)->key = key;
+	(*newnode)->value = value;
 	if (parent != NULL)
-		(*d)->parent = *parent;
+		(*newnode)->parent = *parent;
 
-	dict->count++;
+	root->count++;
 }
 
-void* dict_get_item(Dict* dict, void* key) {
-	if (dict == NULL)
+void* dict_get_item(DictNode* root, void* key) {
+	if (root == NULL)
 		return NULL;
 
-	if (dict->key == NULL)
+	if (root->key == NULL)
 		return NULL;
 
-	if (dict->compare(dict->key, key) == 0)
-		return dict->value;
+	if (root->compare(root->key, key) == 0)
+		return root->value;
 
-	Dict* n = (dict->compare(key, dict->key) < 0) ? dict->left : dict->right;
+	DictNode* n = (root->compare(key, root->key) < 0) ? root->left : root->right;
 	while (n != NULL) {
-		if (dict->compare(key, n->key) == 0)
+		if (root->compare(key, n->key) == 0)
 			return n->value;
 		else
-			n = (dict->compare(key, n->key) < 0) ? n->left : n->right;
+			n = (root->compare(key, n->key) < 0) ? n->left : n->right;
 	}
 
 	return NULL;
 }
 
-int dict_contains(Dict* dict, void* key) {
-	return dict_get_item(dict, key) != NULL;
+int dict_contains(DictNode* root, void* key) {
+	return dict_get_item(root, key) != NULL;
 }
 
-void _dict_walk_key_list_inorder(Dict* dict, List* list) {
+void _dict_walk_key_list_inorder(DictNode* dict, List* list) {
 	if (dict->left != NULL) _dict_walk_key_list_inorder(dict->left, list);
 	list_add_item(list, list->count, dict->key);
 	if (dict->right != NULL) _dict_walk_key_list_inorder(dict->right, list);
 }
 
-List* dict_get_key_list(Dict* dict) {
+List* dict_get_key_list(DictNode* root) {
 	size_t bytelen = 0;
-	switch (dict->keyType) {
+	switch (root->keyType) {
 		case INT:
 			bytelen = sizeof(int);
 			break;
@@ -98,8 +99,8 @@ List* dict_get_key_list(Dict* dict) {
 			break;
 	}
 
-	List* list = list_init(bytelen, dict->count);
-	_dict_walk_key_list_inorder(dict, list);
+	List* list = list_init(bytelen, root->count);
+	_dict_walk_key_list_inorder(root, list);
 
 	return list;
 }

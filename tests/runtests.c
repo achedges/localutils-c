@@ -101,7 +101,7 @@ int test_dict_int(int verbose) {
 	int keys[] = { 1, 2, 3, 4 };
 	string values[] = { "A", "B", "C", "D" };
 
-	Dict* dict = dict_init(INT);
+	DictNode* dict = dict_init(INT);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
 		dict_add_item(dict, &keys[i], values[i]);
 
@@ -133,7 +133,7 @@ int test_dict_string(int verbose) {
 	string keys[] = { "A", "B", "C", "D" };
 	int values[] = { 1, 2, 3, 4 };
 
-	Dict* dict = dict_init(STRING);
+	DictNode* dict = dict_init(STRING);
 	for (int i = 0; i < (sizeof(keys) / sizeof(string)); i++)
 		dict_add_item(dict, keys[i], &values[i]);
 
@@ -161,7 +161,7 @@ int test_dict_string(int verbose) {
 int test_dict_keylist(int verbose) {
 	int failcnt = 0;
 
-	Dict* dict = dict_init(INT);
+	DictNode* dict = dict_init(INT);
 
 	int keys[] = { 3, 1, 2, 0, 5, 4, 6 };
 	string values[] = { "A", "B", "C", "D", "E", "F", "G" };
@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
 	failcnt += test_list_int(verbose);
 	failcnt += test_list_string(verbose);
 
-	// Dict test functions
+	// DictNode test functions
 	failcnt += test_dict_int(verbose);
 	failcnt += test_dict_string(verbose);
 	failcnt += test_dict_keylist(verbose);

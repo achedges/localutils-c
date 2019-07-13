@@ -14,22 +14,22 @@ typedef enum {
 	STRING
 } KeyTypes;
 
-typedef struct Dictionary {
+typedef struct _dict_node {
 	int count;
 	KeyTypes keyType;
 	void* key;
 	void* value;
-	struct Dictionary* parent;
-	struct Dictionary* left;
-	struct Dictionary* right;
+	struct _dict_node* parent;
+	struct _dict_node* left;
+	struct _dict_node* right;
 	int (*compare)(const void* a, const void* b);
-} Dict;
+} DictNode;
 
-Dict* dict_init(KeyTypes keytype);
-void dict_add_item(Dict* dict, void* key, void* value);
-void* dict_get_item(Dict* dict, void* key);
-int dict_contains(Dict* dict, void* key);
-List* dict_get_key_list(Dict* dict);
+DictNode* dict_init(KeyTypes keytype);
+void dict_add_item(DictNode* root, void* key, void* value);
+void* dict_get_item(DictNode* root, void* key);
+int dict_contains(DictNode* root, void* key);
+List* dict_get_key_list(DictNode* root);
 
 
 #endif //LOCALUTILS_DICT_H
