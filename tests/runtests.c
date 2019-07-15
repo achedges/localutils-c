@@ -169,7 +169,7 @@ int test_dict_keylist(int verbose) {
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
 		dict_add_item(&dict, &keys[i], values[keys[i]]);
 
-	List* keylist = dict_get_key_list(dict);
+	List* keylist = dict_get_key_list(dict, IN);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++) {
 		int val = *(int*)list_get_item(keylist, i);
 		if (val != i) {
@@ -205,18 +205,13 @@ int test_dict_balance(int verbose) {
 	for (int i = 0; i < sizeof(intset) / sizeof(int); i++)
 		dict_add_item(&dict, &intset[i], &intset[i]);
 
-	if (*(int*)dict->root->key != 3) {
-		if (verbose)
-			printf("%s Incorrect balanced tree root %d (expected %d)\n", ERR_PREFIX, *(int*)dict->root->key, 3);
-		failcnt++;
-	}
-
-	List* list = dict_get_key_list(dict);
+	int preorder[10] = { 3, 1, 0, 2, 7, 5, 4, 6, 8, 9 };
+	List* list = dict_get_key_list(dict, PRE);
 	for (int i = 0; i < sizeof(intset) / sizeof(int); i++) {
 		int val = *(int*)list_get_item(list, i);
-		if (val != i) {
+		if (val != preorder[i]) {
 			if (verbose)
-				printf("%s Incorrect list value %d from balanced dictionary (expected %d)\n", ERR_PREFIX, val, i);
+				printf("%s Incorrect pre-order key %d (expected %d)\n", ERR_PREFIX, val, preorder[i]);
 			failcnt++;
 		}
 	}

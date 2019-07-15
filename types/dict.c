@@ -114,10 +114,9 @@ DictNode* dict_init_node() {
 	DictNode* d = malloc(sizeof(DictNode));
 	d->key = NULL;
 	d->value = NULL;
-	d->parent = NULL;
 	d->left = NULL;
 	d->right = NULL;
-	d->avl_height = 0;
+	d->avl_height = 1;
 
 	return d;
 }
@@ -152,13 +151,25 @@ int dict_contains(Dictionary* dict, void* key) {
 	return dict_get_item(dict, key) != NULL;
 }
 
-void _dict_walk_key_list_inorder(DictNode* dict, List* list) {
-	if (dict->left != NULL) _dict_walk_key_list_inorder(dict->left, list);
-	list_add_item(list, list->count, dict->key);
-	if (dict->right != NULL) _dict_walk_key_list_inorder(dict->right, list);
+void _dict_walk_key_list_inorder(DictNode* node, List* list) {
+	if (node->left != NULL) _dict_walk_key_list_inorder(node->left, list);
+	list_add_item(list, list->count, node->key);
+	if (node->right != NULL) _dict_walk_key_list_inorder(node->right, list);
 }
 
-List* dict_get_key_list(Dictionary* dict) {
+void _dict_walk_key_list_preorder(DictNode* node, List* list) {
+	list_add_item(list, list->count, node->key);
+	if (node->left != NULL) _dict_walk_key_list_preorder(node->left, list);
+	if (node->right != NULL) _dict_walk_key_list_preorder(node->right, list);
+}
+
+void _dict_walk_key_list_postorder(DictNode* node, List* list) {
+	if (node->left != NULL) _dict_walk_key_list_postorder(node->left, list);
+	if (node->right != NULL) _dict_walk_key_list_postorder(node->right, list);
+	list_add_item(list, list->count, node->key);
+}
+
+List* dict_get_key_list(Dictionary* dict, TreeWalkOrder walkOrder) {
 	size_t bytelen = 0;
 	switch (dict->keytype) {
 		case INT:
@@ -170,7 +181,20 @@ List* dict_get_key_list(Dictionary* dict) {
 	}
 
 	List* list = list_init(bytelen, dict->size);
-	_dict_walk_key_list_inorder(dict->root, list);
+
+	switch (walkOrder) {
+		case IN:
+			_dict_walk_key_list_inorder(dict->root, list);
+			break;
+		case PRE:
+			_dict_walk_key_list_preorder(dict->root, list);
+			break;
+		case POST:
+			_dict_walk_key_list_postorder(dict->root, list);
+			break;
+		default:
+			break;
+	}
 
 	return list;
 }

@@ -14,11 +14,16 @@ typedef enum {
 	STRING
 } KeyTypes;
 
+typedef enum {
+	IN,
+	PRE,
+	POST
+} TreeWalkOrder;
+
 typedef struct _dict_node {
 	int avl_height;
 	void* key;
 	void* value;
-	struct _dict_node* parent;
 	struct _dict_node* left;
 	struct _dict_node* right;
 } DictNode;
@@ -35,7 +40,7 @@ DictNode* dict_init_node();
 void dict_add_item(Dictionary** dict, void* key, void* value);
 void* dict_get_item(Dictionary* dict, void* key);
 int dict_contains(Dictionary* dict, void* key);
-List* dict_get_key_list(Dictionary* dict);
+List* dict_get_key_list(Dictionary* dict, TreeWalkOrder walkOrder);
 
 
 #endif //LOCALUTILS_DICT_H
