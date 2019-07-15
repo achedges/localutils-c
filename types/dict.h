@@ -15,24 +15,27 @@ typedef enum {
 } KeyTypes;
 
 typedef struct _dict_node {
-	int count;
-	KeyTypes keyType;
+	int avl_height;
 	void* key;
 	void* value;
 	struct _dict_node* parent;
 	struct _dict_node* left;
 	struct _dict_node* right;
-	int (*compare)(const void* a, const void* b);
-
-	// AVL tree properties
-	int height;
 } DictNode;
 
-DictNode* dict_init_node(KeyTypes keytype);
-DictNode* dict_add_item(DictNode* root, void* key, void* value);
-void* dict_get_item(DictNode* root, void* key);
-int dict_contains(DictNode* root, void* key);
-List* dict_get_key_list(DictNode* root);
+typedef struct {
+	int size;
+	KeyTypes keytype;
+	int (*compare)(const void* a, const void* b);
+	DictNode* root;
+} Dictionary;
+
+Dictionary* dict_init_dictionary(KeyTypes keytype);
+DictNode* dict_init_node();
+void dict_add_item(Dictionary** dict, void* key, void* value);
+void* dict_get_item(Dictionary* dict, void* key);
+int dict_contains(Dictionary* dict, void* key);
+List* dict_get_key_list(Dictionary* dict);
 
 
 #endif //LOCALUTILS_DICT_H

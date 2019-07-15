@@ -101,9 +101,9 @@ int test_dict_int(int verbose) {
 	int keys[] = { 1, 2, 3, 4 };
 	string values[] = { "A", "B", "C", "D" };
 
-	DictNode* dict = dict_init_node(INT);
+	Dictionary* dict = dict_init_dictionary(INT);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
-		dict = dict_add_item(dict, &keys[i], values[i]);
+		dict_add_item(&dict, &keys[i], values[i]);
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++) {
 		if (dict_contains(dict, &keys[i]) == 0) {
@@ -133,9 +133,9 @@ int test_dict_string(int verbose) {
 	string keys[] = { "A", "B", "C", "D" };
 	int values[] = { 1, 2, 3, 4 };
 
-	DictNode* dict = dict_init_node(STRING);
+	Dictionary* dict = dict_init_dictionary(STRING);
 	for (int i = 0; i < (sizeof(keys) / sizeof(string)); i++)
-		dict = dict_add_item(dict, keys[i], &values[i]);
+		dict_add_item(&dict, keys[i], &values[i]);
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(string)); i++) {
 		if (dict_contains(dict, keys[i]) == 0) {
@@ -161,13 +161,13 @@ int test_dict_string(int verbose) {
 int test_dict_keylist(int verbose) {
 	int failcnt = 0;
 
-	DictNode* dict = dict_init_node(INT);
+	Dictionary* dict = dict_init_dictionary(INT);
 
 	int keys[] = { 3, 1, 2, 0, 5, 4, 6 };
 	string values[] = { "A", "B", "C", "D", "E", "F", "G" };
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
-		dict = dict_add_item(dict, &keys[i], values[keys[i]]);
+		dict_add_item(&dict, &keys[i], values[keys[i]]);
 
 	List* keylist = dict_get_key_list(dict);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++) {
@@ -194,6 +194,39 @@ int test_dict_keylist(int verbose) {
 	return failcnt;
 }
 
+int test_dict_balance(int verbose) {
+	int failcnt = 0;
+
+	int intset[10];
+	for (int i = 0; i < sizeof(intset) / sizeof(int); i++)
+		intset[i] = i;
+
+	Dictionary* dict = dict_init_dictionary(INT);
+	for (int i = 0; i < sizeof(intset) / sizeof(int); i++)
+		dict_add_item(&dict, &intset[i], &intset[i]);
+
+	if (*(int*)dict->root->key != 3) {
+		if (verbose)
+			printf("%s Incorrect balanced tree root %d (expected %d)\n", ERR_PREFIX, *(int*)dict->root->key, 3);
+		failcnt++;
+	}
+
+	List* list = dict_get_key_list(dict);
+	for (int i = 0; i < sizeof(intset) / sizeof(int); i++) {
+		int val = *(int*)list_get_item(list, i);
+		if (val != i) {
+			if (verbose)
+				printf("%s Incorrect list value %d from balanced dictionary (expected %d)\n", ERR_PREFIX, val, i);
+			failcnt++;
+		}
+	}
+
+	if (verbose)
+		printf("test_dict_balance() %s\n", !failcnt ? "passed" : "FAILED");
+
+	return failcnt;
+}
+
 int main(int argc, char** argv) {
 
 	int failcnt = 0;
@@ -214,6 +247,7 @@ int main(int argc, char** argv) {
 	failcnt += test_dict_int(verbose);
 	failcnt += test_dict_string(verbose);
 	failcnt += test_dict_keylist(verbose);
+	failcnt += test_dict_balance(verbose);
 
 	if (!failcnt) {
 		printf("All tests passed\n");

@@ -18,7 +18,7 @@ int _max(int a, int b) {
 }
 
 int _get_subtree_height(DictNode* node) {
-	return (node == NULL) ? 0 : node->height;
+	return (node == NULL) ? 0 : node->avl_height;
 }
 
 int _get_subtree_balance(DictNode* node) {
@@ -32,8 +32,8 @@ DictNode* _right_rotate(DictNode* node) {
 	newroot->right = node;
 	node->left = tmpnode;
 
-	node->height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
-	newroot->height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
+	node->avl_height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
+	newroot->avl_height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
 
 	return newroot;
 }
@@ -45,26 +45,60 @@ DictNode* _left_rotate(DictNode* node) {
 	newroot->left = node;
 	node->right = tmpnode;
 
-	node->height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
-	newroot->height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
+	node->avl_height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
+	newroot->avl_height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
 
 	return newroot;
 }
 
+DictNode* _insert(Dictionary* dict, DictNode* root, void* key, void* value) {
+	if (root == NULL) {
+		root = dict_init_node();
+		root->key = key;
+		root->value = value;
+		return root;
+	}
+
+	int comparison = dict->compare(key, root->key);
+	if (comparison <  0) {
+		root->left = _insert(dict, root->left, key, value);
+	} else if (comparison > 0) {
+		root->right = _insert(dict, root->right, key, value);
+	} else {
+		return root;
+	}
+
+	root->avl_height = _max(_get_subtree_height(root->left), _get_subtree_height(root->right)) + 1;
+	int balance = _get_subtree_balance(root);
+
+	if (balance > 1 && dict->compare(key, root->left->key) < 0)
+		return _right_rotate(root);
+
+	if (balance < -1 && dict->compare(key, root->right->key) > 0)
+		return _left_rotate(root);
+
+	if (balance > 1 && dict->compare(key, root->left->key) > 0) {
+		root->left = _left_rotate(root->left);
+		return _right_rotate(root);
+	}
+
+	if (balance < -1 && dict->compare(key, root->right->key) < 0) {
+		root->right = _right_rotate(root->right);
+		return _left_rotate(root);
+	}
+
+	return root;
+}
+
 // Dictionary implementation - public functions
 
-DictNode* dict_init_node(KeyTypes keytype) {
-	DictNode* d = malloc(sizeof(DictNode));
-	d->count = 0;
-	d->keyType = keytype;
-	d->key = NULL;
-	d->value = NULL;
-	d->parent = NULL;
-	d->left = NULL;
-	d->right = NULL;
-	d->height = 0;
+Dictionary* dict_init_dictionary(KeyTypes keytype) {
+	Dictionary* d = malloc(sizeof(Dictionary));
+	d->size = 0;
+	d->keytype = keytype;
+	d->root = NULL;
 
-	switch (d->keyType) {
+	switch (d->keytype) {
 		case INT:
 			d->compare = &int_comparer;
 			break;
@@ -76,70 +110,46 @@ DictNode* dict_init_node(KeyTypes keytype) {
 	return d;
 }
 
-DictNode* dict_add_item(DictNode* root, void* key, void* value) {
-	if (root->key == NULL) {
-		root->key = key;
-		root->value = value;
-		root->count++;
-		return root;
-	}
+DictNode* dict_init_node() {
+	DictNode* d = malloc(sizeof(DictNode));
+	d->key = NULL;
+	d->value = NULL;
+	d->parent = NULL;
+	d->left = NULL;
+	d->right = NULL;
+	d->avl_height = 0;
 
-	int comparison = root->compare(key, root->key);
-	if (comparison < 0) {
-		if (root->left == NULL)	root->left = dict_init_node(root->keyType);
-		root->left = dict_add_item(root->left, key, value);
-	} else if (comparison > 0) {
-		if (root->right == NULL) root->right = dict_init_node(root->keyType);
-		root->right = dict_add_item(root->right, key, value);
-	} else {
-		return root; // no duplicates
-	}
-
-	root->height = _max(_get_subtree_height(root->left), _get_subtree_height(root->right)) + 1;
-	int balance = _get_subtree_balance(root);
-
-	if (balance > 1 && root->compare(key, root->left->key) < 0)
-		return _right_rotate(root);
-
-	if (balance < -1 && root->compare(key, root->right->key) > 0)
-		return _left_rotate(root);
-
-	if (balance > 1 && root->compare(key, root->left->key) > 0) {
-		root->left = _left_rotate(root->left);
-		return _right_rotate(root);
-	}
-
-	if (balance < -1 && root->compare(key, root->right->key) < 0) {
-		root->right = _right_rotate(root->right);
-		return _left_rotate(root);
-	}
-
-	return root;
+	return d;
 }
 
-void* dict_get_item(DictNode* root, void* key) {
-	if (root == NULL)
+void dict_add_item(Dictionary** dict, void* key, void* value) {
+	(*dict)->root = _insert((*dict), (*dict)->root, key, value);
+	(*dict)->size++;
+}
+
+void* dict_get_item(Dictionary* dict, void* key) {
+	if (dict->root == NULL)
 		return NULL;
 
-	if (root->key == NULL)
+	if (dict->root->key == NULL)
 		return NULL;
 
-	if (root->compare(root->key, key) == 0)
-		return root->value;
+	if (dict->compare(key, dict->root->key) == 0)
+		return dict->root->value;
 
-	DictNode* n = (root->compare(key, root->key) < 0) ? root->left : root->right;
+	DictNode* n = (dict->compare(key, dict->root->key) < 0) ? dict->root->left : dict->root->right;
 	while (n != NULL) {
-		if (root->compare(key, n->key) == 0)
+		if (dict->compare(key, n->key) == 0)
 			return n->value;
 		else
-			n = (root->compare(key, n->key) < 0) ? n->left : n->right;
+			n = (dict->compare(key, n->key) < 0) ? n->left : n->right;
 	}
 
 	return NULL;
 }
 
-int dict_contains(DictNode* root, void* key) {
-	return dict_get_item(root, key) != NULL;
+int dict_contains(Dictionary* dict, void* key) {
+	return dict_get_item(dict, key) != NULL;
 }
 
 void _dict_walk_key_list_inorder(DictNode* dict, List* list) {
@@ -148,9 +158,9 @@ void _dict_walk_key_list_inorder(DictNode* dict, List* list) {
 	if (dict->right != NULL) _dict_walk_key_list_inorder(dict->right, list);
 }
 
-List* dict_get_key_list(DictNode* root) {
+List* dict_get_key_list(Dictionary* dict) {
 	size_t bytelen = 0;
-	switch (root->keyType) {
+	switch (dict->keytype) {
 		case INT:
 			bytelen = sizeof(int);
 			break;
@@ -159,8 +169,8 @@ List* dict_get_key_list(DictNode* root) {
 			break;
 	}
 
-	List* list = list_init(bytelen, root->count);
-	_dict_walk_key_list_inorder(root, list);
+	List* list = list_init(bytelen, dict->size);
+	_dict_walk_key_list_inorder(dict->root, list);
 
 	return list;
 }
