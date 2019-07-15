@@ -11,7 +11,49 @@
 #include "list.h"
 
 
-DictNode* dict_init(KeyTypes keytype) {
+// AVL tree implementation - private functions
+
+int _max(int a, int b) {
+	return (a > b) ? a : b;
+}
+
+int _get_subtree_height(DictNode* node) {
+	return (node == NULL) ? 0 : node->height;
+}
+
+int _get_subtree_balance(DictNode* node) {
+	return (node == NULL) ? 0 : _get_subtree_height(node->left) - _get_subtree_height(node->right);
+}
+
+DictNode* _right_rotate(DictNode* node) {
+	DictNode* newroot = node->left;
+	DictNode* tmpnode = newroot->right;
+
+	newroot->right = node;
+	node->left = tmpnode;
+
+	node->height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
+	newroot->height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
+
+	return newroot;
+}
+
+DictNode* _left_rotate(DictNode* node) {
+	DictNode* newroot = node->right;
+	DictNode* tmpnode = newroot->left;
+
+	newroot->left = node;
+	node->right = tmpnode;
+
+	node->height = _max(_get_subtree_height(node->left), _get_subtree_height(node->right)) + 1;
+	newroot->height = _max(_get_subtree_height(newroot->left), _get_subtree_height(newroot->right)) + 1;
+
+	return newroot;
+}
+
+// Dictionary implementation - public functions
+
+DictNode* dict_init_node(KeyTypes keytype) {
 	DictNode* d = malloc(sizeof(DictNode));
 	d->count = 0;
 	d->keyType = keytype;
@@ -20,6 +62,7 @@ DictNode* dict_init(KeyTypes keytype) {
 	d->parent = NULL;
 	d->left = NULL;
 	d->right = NULL;
+	d->height = 0;
 
 	switch (d->keyType) {
 		case INT:
@@ -33,28 +76,45 @@ DictNode* dict_init(KeyTypes keytype) {
 	return d;
 }
 
-void dict_add_item(DictNode* root, void* key, void* value) {
+DictNode* dict_add_item(DictNode* root, void* key, void* value) {
 	if (root->key == NULL) {
 		root->key = key;
 		root->value = value;
 		root->count++;
-		return;
+		return root;
 	}
 
-	DictNode** parent = NULL;
-	DictNode** newnode = &root;
-	while (*newnode != NULL) {
-		parent = newnode;
-		newnode = (root->compare(key, (*newnode)->key) < 0) ? &(*newnode)->left : &(*newnode)->right;
+	int comparison = root->compare(key, root->key);
+	if (comparison < 0) {
+		if (root->left == NULL)	root->left = dict_init_node(root->keyType);
+		root->left = dict_add_item(root->left, key, value);
+	} else if (comparison > 0) {
+		if (root->right == NULL) root->right = dict_init_node(root->keyType);
+		root->right = dict_add_item(root->right, key, value);
+	} else {
+		return root; // no duplicates
 	}
 
-	*newnode = dict_init(root->keyType);
-	(*newnode)->key = key;
-	(*newnode)->value = value;
-	if (parent != NULL)
-		(*newnode)->parent = *parent;
+	root->height = _max(_get_subtree_height(root->left), _get_subtree_height(root->right)) + 1;
+	int balance = _get_subtree_balance(root);
 
-	root->count++;
+	if (balance > 1 && root->compare(key, root->left->key) < 0)
+		return _right_rotate(root);
+
+	if (balance < -1 && root->compare(key, root->right->key) > 0)
+		return _left_rotate(root);
+
+	if (balance > 1 && root->compare(key, root->left->key) > 0) {
+		root->left = _left_rotate(root->left);
+		return _right_rotate(root);
+	}
+
+	if (balance < -1 && root->compare(key, root->right->key) < 0) {
+		root->right = _right_rotate(root->right);
+		return _left_rotate(root);
+	}
+
+	return root;
 }
 
 void* dict_get_item(DictNode* root, void* key) {

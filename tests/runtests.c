@@ -101,9 +101,9 @@ int test_dict_int(int verbose) {
 	int keys[] = { 1, 2, 3, 4 };
 	string values[] = { "A", "B", "C", "D" };
 
-	DictNode* dict = dict_init(INT);
+	DictNode* dict = dict_init_node(INT);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
-		dict_add_item(dict, &keys[i], values[i]);
+		dict = dict_add_item(dict, &keys[i], values[i]);
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++) {
 		if (dict_contains(dict, &keys[i]) == 0) {
@@ -133,9 +133,9 @@ int test_dict_string(int verbose) {
 	string keys[] = { "A", "B", "C", "D" };
 	int values[] = { 1, 2, 3, 4 };
 
-	DictNode* dict = dict_init(STRING);
+	DictNode* dict = dict_init_node(STRING);
 	for (int i = 0; i < (sizeof(keys) / sizeof(string)); i++)
-		dict_add_item(dict, keys[i], &values[i]);
+		dict = dict_add_item(dict, keys[i], &values[i]);
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(string)); i++) {
 		if (dict_contains(dict, keys[i]) == 0) {
@@ -161,13 +161,13 @@ int test_dict_string(int verbose) {
 int test_dict_keylist(int verbose) {
 	int failcnt = 0;
 
-	DictNode* dict = dict_init(INT);
+	DictNode* dict = dict_init_node(INT);
 
 	int keys[] = { 3, 1, 2, 0, 5, 4, 6 };
 	string values[] = { "A", "B", "C", "D", "E", "F", "G" };
 
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++)
-		dict_add_item(dict, &keys[i], values[keys[i]]);
+		dict = dict_add_item(dict, &keys[i], values[keys[i]]);
 
 	List* keylist = dict_get_key_list(dict);
 	for (int i = 0; i < (sizeof(keys) / sizeof(int)); i++) {
