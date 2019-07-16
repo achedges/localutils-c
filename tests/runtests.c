@@ -201,17 +201,41 @@ int test_dict_balance(int verbose) {
 	for (int i = 0; i < sizeof(intset) / sizeof(int); i++)
 		intset[i] = i;
 
-	Dictionary* dict = dict_init_dictionary(INT);
+	Dictionary *dict = dict_init_dictionary(INT);
 	for (int i = 0; i < sizeof(intset) / sizeof(int); i++)
 		dict_add_item(&dict, &intset[i], &intset[i]);
 
-	int preorder[10] = { 3, 1, 0, 2, 7, 5, 4, 6, 8, 9 };
+	int preorder[10] = {3, 1, 0, 2, 7, 5, 4, 6, 8, 9};
 	List* list = dict_get_key_list(dict, PRE);
 	for (int i = 0; i < sizeof(intset) / sizeof(int); i++) {
-		int val = *(int*)list_get_item(list, i);
+		int val = *(int *) list_get_item(list, i);
 		if (val != preorder[i]) {
 			if (verbose)
 				printf("%s Incorrect pre-order key %d (expected %d)\n", ERR_PREFIX, val, preorder[i]);
+			failcnt++;
+		}
+	}
+
+	dict_del_item(&dict,  &preorder[0]); // delete current root '3'
+	int preorder2[9] = { 2, 1, 0, 7, 5, 4, 6, 8, 9 };
+	list = dict_get_key_list(dict, PRE);
+	for (int i = 0; i < sizeof(preorder2) / sizeof(int); i++) {
+		int val = *(int*)list_get_item(list, i);
+		if (val != preorder2[i]) {
+			if (verbose)
+				printf("%s Incorrect pre-order key %d after delete (expected %d)\n", ERR_PREFIX, val, preorder2[i]);
+			failcnt++;
+		}
+	}
+
+	dict_del_item(&dict, &preorder2[7]);
+	int preorder3[8] = { 2, 1, 0, 7, 5, 4, 6, 9 };
+	list = dict_get_key_list(dict, PRE);
+	for (int i = 0; i < sizeof(preorder3) / sizeof(int); i++) {
+		int val = *(int*)list_get_item(list, i);
+		if (val != preorder3[i]) {
+			if (verbose)
+				printf("%s Incorrect pre-order key %d after delete (expected %d)\n", ERR_PREFIX, val, preorder3[i]);
 			failcnt++;
 		}
 	}
@@ -245,10 +269,10 @@ int main(int argc, char** argv) {
 	failcnt += test_dict_balance(verbose);
 
 	if (!failcnt) {
-		printf("All tests passed\n");
+		printf("\nAll tests passed\n");
 		return 0;
 	} else {
-		printf("%d test%s FAILED\n", failcnt, failcnt == 1 ? "" : "s");
+		printf("\n%d test%s FAILED\n", failcnt, failcnt == 1 ? "" : "s");
 		return failcnt;
 	}
 }

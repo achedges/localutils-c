@@ -25,6 +25,20 @@ int _get_subtree_balance(DictNode* node) {
 	return (node == NULL) ? 0 : _get_subtree_height(node->left) - _get_subtree_height(node->right);
 }
 
+DictNode* _get_subtree_minimum(DictNode* node) {
+	DictNode* current = node;
+	while (current->left != NULL)
+		current = current->left;
+	return current;
+}
+
+DictNode* _get_subtree_maximum(DictNode* node) {
+	DictNode* current = node;
+	while (current->right != NULL)
+		current = current->right;
+	return current;
+}
+
 DictNode* _right_rotate(DictNode* node) {
 	DictNode* newroot = node->left;
 	DictNode* tmpnode = newroot->right;
@@ -90,6 +104,59 @@ DictNode* _insert(Dictionary* dict, DictNode* root, void* key, void* value) {
 	return root;
 }
 
+DictNode* _delete(Dictionary* dict, DictNode* root, void* key) {
+	if (root == NULL)
+		return root;
+
+	int comparison = dict->compare(key, root->key);
+	if (comparison < 0) {
+		root->left = _delete(dict, root->left, key);
+	} else if (comparison > 0) {
+		root->right = _delete(dict, root->right, key);
+	} else {
+		if (root->left == NULL || root->right == NULL) {
+			DictNode* tmp = (root->left == NULL) ? root->right : root->left;
+			if (tmp == NULL) {
+				tmp = root;
+				root = NULL;
+			} else {
+				*root = *tmp;
+			}
+
+			free(tmp);
+		} else {
+			DictNode* tmp = _get_subtree_maximum(root->left);
+			root->key = tmp->key;
+			root->value = tmp->value;
+			root->left = _delete(dict, root->left, tmp->key);
+		}
+	}
+
+	if (root == NULL)
+		return root;
+
+	root->avl_height = _max(_get_subtree_height(root->left), _get_subtree_height(root->right)) + 1;
+	int balance = _get_subtree_balance(root);
+
+	if (balance > 1 && _get_subtree_balance(root->left) >= 0)
+		return _right_rotate(root);
+
+	if (balance > 1 && _get_subtree_balance(root->left) < 0) {
+		root->left = _left_rotate(root->left);
+		return _right_rotate(root);
+	}
+
+	if (balance < -1 && _get_subtree_balance(root->right) <= 0)
+		return _left_rotate(root);
+
+	if (balance < -1 && _get_subtree_balance(root->right) > 0) {
+		root->right = _right_rotate(root->right);
+		return _left_rotate(root);
+	}
+
+	return root;
+}
+
 // Dictionary implementation - public functions
 
 Dictionary* dict_init_dictionary(KeyTypes keytype) {
@@ -145,6 +212,11 @@ void* dict_get_item(Dictionary* dict, void* key) {
 	}
 
 	return NULL;
+}
+
+void dict_del_item(Dictionary** dict, void* key) {
+	(*dict)->root = _delete((*dict), (*dict)->root, key);
+	(*dict)->size--;
 }
 
 int dict_contains(Dictionary* dict, void* key) {
