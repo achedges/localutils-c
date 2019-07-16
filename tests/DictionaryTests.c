@@ -1,99 +1,9 @@
 //
-// Created by Adam Hedges on 2019-07-11.
+// Created by Adam Hedges on 2019-07-16.
 //
 
-#include <stdio.h>
-#include <string.h>
-#include "../types/types.h"
-#include "../types/list.h"
-#include "../types/dict.h"
+#include "tests.h"
 
-
-const char* ERR_PREFIX = "   *** ERROR ***";
-
-int test_list_int(int verbose) {
-	int failcnt = 0;
-
-	int num = 4;
-	List* list = list_init(sizeof(int), num);
-	for (int i = 0; i < num; i++)
-		list_add_item(list, i, &i);
-
-	int appendint = num;
-	list_append(&list, &appendint);
-
-	if (list->count != num + 1) {
-		if (verbose)
-			printf("%s Incorrect int list size %d (epected %d)\n", ERR_PREFIX, list->count, num + 1);
-		failcnt++;
-	}
-	if (list->capacity != 10) {
-		if (verbose)
-			printf("%s Incorrect int list capacity %d (expected 10)\n", ERR_PREFIX, list->capacity);
-		failcnt++;
-	}
-
-	for (int i = 0; i < num + 1; i++) {
-		int _val = *(int*)list_get_item(list, i);
-		if (_val != i) {
-			if (verbose)
-				printf("%s Incorrect list item value %d (expected %d)\n", ERR_PREFIX, _val, i);
-			failcnt++;
-		}
-	}
-
-	if (verbose)
-		printf("test_list_int() %s\n", !failcnt ? "passed" : "FAILED");
-
-	return failcnt;
-}
-
-int test_list_string(int verbose) {
-	int failcnt = 0;
-
-	string strings[4] = { "A", "B", "C", "D" };
-
-	List* list = list_init(sizeof(string), 4);
-	for (int i = 0; i < 4; i++) {
-		list_add_item(list, i, &strings[i]);
-	}
-
-	string appendstr = "E";
-	list_append(&list, appendstr);
-
-	if (list->count != 5) {
-		if (verbose)
-			printf("%s Incorrect string list size %d (expected %d)\n", ERR_PREFIX, list->count, 5);
-		failcnt++;
-	}
-
-	if (list->capacity != 10) {
-		if (verbose)
-			printf("%s Incorrect string list capacity %d (expected %d)\n", ERR_PREFIX, list->capacity, 10);
-		failcnt++;
-	}
-
-	for (int i = 0; i < 4; i++) {
-		string _val = *(string*)list_get_item(list, i);
-		if (strcmp(_val, strings[i]) != 0) {
-			if (verbose)
-				printf("%s Incorrect list item val %s (expected %s)\n", ERR_PREFIX, _val, strings[i]);
-			failcnt++;
-		}
-	}
-
-	string _val = (string)list_get_item(list, 4);
-	if (strcmp(_val, "E") != 0) {
-		if (verbose)
-			printf("%s Incorrect list item val %s (expected %s)\n", ERR_PREFIX, _val, "E");
-		failcnt++;
-	}
-
-	if (verbose)
-		printf("test_list_string() %s\n", !failcnt ? "passed" : "FAILED");
-
-	return failcnt;
-}
 
 int test_dict_int(int verbose) {
 	int failcnt = 0;
@@ -244,35 +154,4 @@ int test_dict_balance(int verbose) {
 		printf("test_dict_balance() %s\n", !failcnt ? "passed" : "FAILED");
 
 	return failcnt;
-}
-
-int main(int argc, char** argv) {
-
-	int failcnt = 0;
-	int verbose = 0;
-
-	for (int a = 1; a < argc; a++) {
-		if (strcmp(argv[a], "-verbose") == 0)
-			verbose = 1;
-		else
-			printf("Unknown argument '%s'\n", argv[a]);
-	}
-
-	// List test functions
-	failcnt += test_list_int(verbose);
-	failcnt += test_list_string(verbose);
-
-	// DictNode test functions
-	failcnt += test_dict_int(verbose);
-	failcnt += test_dict_string(verbose);
-	failcnt += test_dict_keylist(verbose);
-	failcnt += test_dict_balance(verbose);
-
-	if (!failcnt) {
-		printf("\nAll tests passed\n");
-		return 0;
-	} else {
-		printf("\n%d test%s FAILED\n", failcnt, failcnt == 1 ? "" : "s");
-		return failcnt;
-	}
 }
