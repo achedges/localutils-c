@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../types/types.h"
-#include "../types/list.h"
-#include "../types/dict.h"
+#include "../src/types/types.h"
+#include "../src/types/list.h"
+#include "../src/types/dict.h"
 
 #ifndef LOCALUTILS_TESTS_H
 #define LOCALUTILS_TESTS_H
@@ -24,6 +24,9 @@ int test_dict_int(int verbose);
 int test_dict_string(int verbose);
 int test_dict_keylist(int verbose);
 int test_dict_balance(int verbose);
+
+// File tests
+int test_file_download(int verbose);
 
 
 #endif //LOCALUTILS_TESTS_H

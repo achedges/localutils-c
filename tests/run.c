@@ -31,6 +31,9 @@ int main(int argc, char** argv) {
 	failcnt += test_dict_keylist(verbose);
 	failcnt += test_dict_balance(verbose);
 
+	// File test functions
+	failcnt += test_file_download(verbose);
+
 	if (!failcnt) {
 		printf("\nAll tests passed\n");
 		return 0;
