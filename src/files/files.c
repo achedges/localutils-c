@@ -29,5 +29,12 @@ void download_file(const char* url, const char* filepath) {
 }
 
 void extract_file(const char* archivepath, const char* extractpath) {
-	// https://libzip.org/
+	int ziperr = 0;
+	zip_t* archive = zip_open(archivepath, ZIP_RDONLY, &ziperr);
+
+	if (archive != NULL) {
+		for (int i = 0; i < zip_get_num_entries(archive, ZIP_RDONLY); i++) {
+			// https://gist.github.com/mobius/1759816
+		}
+	}
 }

@@ -13,12 +13,13 @@ link_directories(
         /usr/local/lib)
 
 find_library(CURL_LIB curl PATH /usr/local/opt/curl/lib NO_DEFAULT_PATH)
+find_library(ZIP_LIB zip PATH /usr/local/lib/libzip NO_DEFAULT_PATH)
 
 add_library(types src/types/comparers.c src/types/dict.c src/types/list.c)
 add_library(files src/files/files.c)
 
 add_executable(runtests tests/run.c tests/ListTests.c tests/DictionaryTests.c tests/FileTests.c)
-target_link_libraries(runtests types files ${CURL_LIB})
+target_link_libraries(runtests types files ${CURL_LIB} ${ZIP_LIB})
 
 set_target_properties(types PROPERTIES PUBLIC_HEADER "src/types/types.h;src/types/comparers.h;src/types/list.h;src/types/dict.h")
 set_target_properties(files PROPERTIES PUBLIC_HEADER "src/files/files.h")
