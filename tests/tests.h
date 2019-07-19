@@ -5,9 +5,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "../src/types/types.h"
 #include "../src/types/list.h"
 #include "../src/types/dict.h"
+#include "../src/files/files.h"
 
 #ifndef LOCALUTILS_TESTS_H
 #define LOCALUTILS_TESTS_H
@@ -27,6 +29,7 @@ int test_dict_balance(int verbose);
 
 // File tests
 int test_file_download(int verbose);
+int test_file_extract(int verbose);
 
 
 #endif //LOCALUTILS_TESTS_H

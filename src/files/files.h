@@ -8,6 +8,8 @@
 
 #include <curl.h>
 #include <libzip/zip.h>
+#include <fcntl.h>
+#include <zconf.h>
 
 
 void download_file(const char* url, const char* filepath);

@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 
 	// File test functions
 	failcnt += test_file_download(verbose);
+	failcnt += test_file_extract(verbose);
 
 	if (!failcnt) {
 		printf("\nAll tests passed\n");
