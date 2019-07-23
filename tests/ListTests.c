@@ -92,7 +92,7 @@ int test_list_string(int verbose) {
 int test_list_empty_append(int verbose) {
 	int failcnt = 0;
 
-	int appenditems = 120;
+	int appenditems = 160;
 	List* list = list_init(sizeof(int), 0);
 	for (int i = 0; i < appenditems; i++) {
 		list = list_append(list, &i);

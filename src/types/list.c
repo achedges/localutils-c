@@ -40,7 +40,7 @@ List* list_append(List* list, void* item) {
 		workinglist = list_init(list->bytelen, newcap);
 		workinglist->count = list->count;
 		workinglist->bytelen = list->bytelen;
-		workinglist->items = malloc(workinglist->bytelen * workinglist->count);
+		workinglist->items = malloc(workinglist->bytelen * workinglist->capacity);
 		memcpy(workinglist->items, list->items, list->bytelen * list->count);
 		free(list->items);
 		free(list);
