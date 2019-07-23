@@ -11,7 +11,7 @@
 
 
 void download_file(const char* url, const char* filepath);
-void extract_file(const char* archivepath, const char* extractpath);
+void extract_file(const char* archivepath, const char* extractpath, int deletearchive);
 
 
 #endif //LOCALUTILS_FILES_H

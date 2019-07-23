@@ -40,7 +40,7 @@ int test_file_extract(int verbose) {
 	const char* archivepath = "/Users/adam/c/localutils/resources/test-file.zip";
 	const char* extractpath = "/Users/adam/c/localutils/resources/test-file.txt";
 
-	extract_file(archivepath, extractpath);
+	extract_file(archivepath, extractpath, 0);
 
 	struct stat fstat;
 	if (stat(extractpath, &fstat) == 0) {

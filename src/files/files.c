@@ -27,7 +27,7 @@ void download_file(const char* url, const char* filepath) {
 	curl_easy_cleanup(curl);
 }
 
-void extract_file(const char* archivepath, const char* extractpath) {
+void extract_file(const char* archivepath, const char* extractpath, int deletearchive) {
 	int ziperr = 0; // error 19
 	zip_t* archive = zip_open(archivepath, 0, &ziperr);
 
@@ -54,4 +54,7 @@ void extract_file(const char* archivepath, const char* extractpath) {
 			}
 		}
 	}
+
+	zip_close(archive);
+	if (deletearchive) remove(archivepath);
 }

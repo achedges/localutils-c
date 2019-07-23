@@ -14,7 +14,7 @@ int test_list_int(int verbose) {
 		list_add_item(list, i, &i);
 
 	int appendint = num;
-	list = list_append(list, &appendint);
+	list_append(list, &appendint);
 
 	if (list->count != num + 1) {
 		if (verbose)
@@ -53,7 +53,7 @@ int test_list_string(int verbose) {
 	}
 
 	string appendstr = "E";
-	list = list_append(list, appendstr);
+	list_append(list, appendstr);
 
 	if (list->count != 5) {
 		if (verbose)
@@ -95,7 +95,7 @@ int test_list_empty_append(int verbose) {
 	int appenditems = 160;
 	List* list = list_init(sizeof(int), 0);
 	for (int i = 0; i < appenditems; i++) {
-		list = list_append(list, &i);
+		list_append(list, &i);
 	}
 
 	for (int i = 0; i < list->count; i++) {

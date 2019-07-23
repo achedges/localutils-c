@@ -29,23 +29,16 @@ void* list_get_item(List* list, int index) {
 	return list->items + (list->bytelen * index);
 }
 
-List* list_append(List* list, void* item) {
+void list_append(List* list, void* item) {
 	// auto-grow by 50%
-	List* workinglist;
 
-	if (list->count < list->capacity) {
-		workinglist = list;
-	} else {
-		int newcap = (int)(list->capacity * 1.5);
-		workinglist = list_init(list->bytelen, newcap);
-		workinglist->count = list->count;
-		workinglist->bytelen = list->bytelen;
-		workinglist->items = malloc(workinglist->bytelen * workinglist->capacity);
-		memcpy(workinglist->items, list->items, list->bytelen * list->count);
+	if (list->count == list->capacity)  {
+		list->capacity = (int)(list->capacity * 1.5);
+		void* items = malloc(list->bytelen * list->capacity);
+		memcpy(items, list->items, list->bytelen * list->count);
 		free(list->items);
-		free(list);
+		list->items = items;
 	}
 
-	list_add_item(workinglist, workinglist->count, item);
-	return workinglist;
+	list_add_item(list, list->count, item);
 }
