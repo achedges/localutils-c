@@ -3,6 +3,8 @@
 //
 
 #include "files.h"
+#include "curl.h"
+#include "libzip/zip.h"
 
 
 void download_file(const char* url, const char* filepath) {
@@ -13,16 +15,19 @@ void download_file(const char* url, const char* filepath) {
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-	curl_easy_perform(curl);
+	CURLcode result = curl_easy_perform(curl);
+
+	curl_version_info_data* versionInfoData = curl_version_info(CURLVERSION_NOW);
+
+	if (result != CURLE_OK) {
+		printf("curl error %d (v. %s)\n", result, versionInfoData->version);
+	}
 
 	fclose(f);
 	curl_easy_cleanup(curl);
 }
 
 void extract_file(const char* archivepath, const char* extractpath) {
-
-	// https://gist.github.com/mobius/1759816
-
 	int ziperr = 0; // error 19
 	zip_t* archive = zip_open(archivepath, 0, &ziperr);
 

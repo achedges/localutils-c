@@ -20,6 +20,7 @@ const extern char* ERR_PREFIX;
 // List tests
 int test_list_int(int verbose);
 int test_list_string(int verbose);
+int test_list_empty_append(int verbose);
 
 // Dictionary tests
 int test_dict_int(int verbose);

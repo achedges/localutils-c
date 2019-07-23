@@ -14,16 +14,16 @@ int test_list_int(int verbose) {
 		list_add_item(list, i, &i);
 
 	int appendint = num;
-	list_append(&list, &appendint);
+	list = list_append(list, &appendint);
 
 	if (list->count != num + 1) {
 		if (verbose)
 			printf("%s Incorrect int list size %d (epected %d)\n", ERR_PREFIX, list->count, num + 1);
 		failcnt++;
 	}
-	if (list->capacity != 10) {
+	if (list->capacity != 6) {
 		if (verbose)
-			printf("%s Incorrect int list capacity %d (expected 10)\n", ERR_PREFIX, list->capacity);
+			printf("%s Incorrect int list capacity %d (expected 6)\n", ERR_PREFIX, list->capacity);
 		failcnt++;
 	}
 
@@ -53,7 +53,7 @@ int test_list_string(int verbose) {
 	}
 
 	string appendstr = "E";
-	list_append(&list, appendstr);
+	list = list_append(list, appendstr);
 
 	if (list->count != 5) {
 		if (verbose)
@@ -61,9 +61,9 @@ int test_list_string(int verbose) {
 		failcnt++;
 	}
 
-	if (list->capacity != 10) {
+	if (list->capacity != 6) {
 		if (verbose)
-			printf("%s Incorrect string list capacity %d (expected %d)\n", ERR_PREFIX, list->capacity, 10);
+			printf("%s Incorrect string list capacity %d (expected 6)\n", ERR_PREFIX, list->capacity);
 		failcnt++;
 	}
 
@@ -85,6 +85,30 @@ int test_list_string(int verbose) {
 
 	if (verbose)
 		printf("test_list_string() %s\n", !failcnt ? "passed" : "FAILED");
+
+	return failcnt;
+}
+
+int test_list_empty_append(int verbose) {
+	int failcnt = 0;
+
+	int appenditems = 120;
+	List* list = list_init(sizeof(int), 0);
+	for (int i = 0; i < appenditems; i++) {
+		list = list_append(list, &i);
+	}
+
+	for (int i = 0; i < list->count; i++) {
+		int item = *(int*)list_get_item(list, i);
+		if (item != i) {
+			if (verbose)
+				printf("%s Incorrect appended list item %d (expected %d)\n", ERR_PREFIX, item, i);
+			failcnt++;
+		}
+	}
+
+	if (verbose)
+		printf("test_list_empty_append() %s\n", !failcnt ? "passed" : "FAILED");
 
 	return failcnt;
 }

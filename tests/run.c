@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
 	// List test functions
 	failcnt += test_list_int(verbose);
 	failcnt += test_list_string(verbose);
+	failcnt += test_list_empty_append(verbose);
 
 	// DictNode test functions
 	failcnt += test_dict_int(verbose);

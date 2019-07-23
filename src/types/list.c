@@ -9,12 +9,14 @@
 #include "list.h"
 
 
-List* list_init(size_t bytelen, int capacity) {
+List* list_init(size_t bytelen, size_t capacity) {
 	List* ret = malloc(sizeof(List));
-	ret->capacity = capacity;
+
+	ret->capacity = (capacity == 0) ? 100 : capacity; // initialize an empty list with a capacity of 100
 	ret->count = 0;
 	ret->bytelen = bytelen;
-	ret->items = malloc(ret->bytelen * capacity);
+	ret->items = malloc(ret->bytelen * ret->capacity);
+
 	return ret;
 }
 
@@ -27,25 +29,23 @@ void* list_get_item(List* list, int index) {
 	return list->items + (list->bytelen * index);
 }
 
-void list_append(List** list, void* item) {
-	// auto-grow by 10%
+List* list_append(List* list, void* item) {
+	// auto-grow by 50%
+	List* workinglist;
 
-	if ((*list)->count == (*list)->capacity) {
-		int newcap = (int)((*list)->capacity * 1.1);
-		if (newcap < 10) newcap = 10;
-
-		List* newlist = list_init((*list)->bytelen, newcap);
-		newlist->count = (*list)->count;
-		newlist->bytelen = (*list)->bytelen;
-		newlist->items = malloc(newlist->bytelen * newlist->count);
-
-		memcpy(newlist->items, (*list)->items, (*list)->bytelen * (*list)->count);
-
-		free((*list)->items);
-		free(*list);
-
-		(*list) = newlist;
+	if (list->count < list->capacity) {
+		workinglist = list;
+	} else {
+		int newcap = (int)(list->capacity * 1.5);
+		workinglist = list_init(list->bytelen, newcap);
+		workinglist->count = list->count;
+		workinglist->bytelen = list->bytelen;
+		workinglist->items = malloc(workinglist->bytelen * workinglist->count);
+		memcpy(workinglist->items, list->items, list->bytelen * list->count);
+		free(list->items);
+		free(list);
 	}
 
-	list_add_item(*list, (*list)->count, item);
+	list_add_item(workinglist, workinglist->count, item);
+	return workinglist;
 }

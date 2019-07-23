@@ -6,8 +6,6 @@
 #define LOCALUTILS_FILES_H
 
 
-#include <curl.h>
-#include <libzip/zip.h>
 #include <fcntl.h>
 #include <zconf.h>
 
