@@ -28,7 +28,7 @@ void download_file(const char* url, const char* filepath) {
 }
 
 void extract_file(const char* archivepath, const char* extractpath, int deletearchive) {
-	int ziperr = 0; // error 19
+	int ziperr = 0;
 	zip_t* archive = zip_open(archivepath, 0, &ziperr);
 
 	mode_t filewriteopt = O_CREAT | O_RDWR | O_TRUNC;
