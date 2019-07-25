@@ -155,3 +155,30 @@ int test_dict_balance(int verbose) {
 
 	return failcnt;
 }
+
+int test_dict_update(int verbose) {
+	int failcnt = 0;
+	int keys[] = { 1, 2, 3, 4 };
+	int update = 9;
+
+	Dictionary* dict = dict_init_dictionary(INT);
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++)
+		dict_add_item(&dict, &keys[i], &keys[i]);
+
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++)
+		dict_update_item(dict, &keys[i], &update);
+
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++) {
+		int _val = *(int*)dict_get_item(dict, &keys[i]);
+		if (_val != update) {
+			if (verbose)
+				printf("%s Incorrect updated value %d (expected %d)\n", ERR_PREFIX, _val, update);
+			failcnt++;
+		}
+	}
+
+	if (verbose)
+		printf("test_dict_update() %s\n", !failcnt ? "passed" : "FAILED");
+
+	return failcnt;
+}

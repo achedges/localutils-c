@@ -17,6 +17,7 @@ List* list_init(size_t bytelen, size_t capacity);
 void list_add_item(List *list, int index, void *item);
 void* list_get_item(List* list, int index);
 void list_append(List* list, void* item);
+void list_reset(List* list);
 
 
 #endif //LOCALUTILS_LIST_H

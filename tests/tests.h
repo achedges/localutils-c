@@ -27,6 +27,7 @@ int test_dict_int(int verbose);
 int test_dict_string(int verbose);
 int test_dict_keylist(int verbose);
 int test_dict_balance(int verbose);
+int test_dict_update(int verbose);
 
 // File tests
 int test_file_download(int verbose);

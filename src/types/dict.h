@@ -38,10 +38,12 @@ typedef struct {
 Dictionary* dict_init_dictionary(KeyTypes keytype);
 DictNode* dict_init_node();
 void dict_add_item(Dictionary** dict, void* key, void* value);
+void dict_update_item(Dictionary* dict, void* key, void* value);
 void dict_del_item(Dictionary** dict, void* key);
 void* dict_get_item(Dictionary* dict, void* key);
 int dict_contains(Dictionary* dict, void* key);
 List* dict_get_key_list(Dictionary* dict, TreeWalkOrder walkOrder);
+void dict_reset(Dictionary* dict);
 
 
 #endif //LOCALUTILS_DICT_H

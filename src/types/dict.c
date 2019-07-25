@@ -193,7 +193,7 @@ void dict_add_item(Dictionary** dict, void* key, void* value) {
 	(*dict)->size++;
 }
 
-void* dict_get_item(Dictionary* dict, void* key) {
+DictNode** _dict_find_node_address(Dictionary *dict, void *key) {
 	if (dict->root == NULL)
 		return NULL;
 
@@ -201,17 +201,30 @@ void* dict_get_item(Dictionary* dict, void* key) {
 		return NULL;
 
 	if (dict->compare(key, dict->root->key) == 0)
-		return dict->root->value;
+		return &(dict->root);
 
-	DictNode* n = (dict->compare(key, dict->root->key) < 0) ? dict->root->left : dict->root->right;
-	while (n != NULL) {
-		if (dict->compare(key, n->key) == 0)
-			return n->value;
+	DictNode** n = (dict->compare(key, dict->root->key) < 0) ? &(dict->root->left) : &(dict->root->right);
+	while (*n != NULL) {
+		if (dict->compare(key, (*n)->key) == 0)
+			return n;
 		else
-			n = (dict->compare(key, n->key) < 0) ? n->left : n->right;
+			n = (dict->compare(key, (*n)->key) < 0) ? &((*n)->left) : &((*n)->right);
 	}
 
 	return NULL;
+}
+
+void dict_update_item(Dictionary* dict, void* key, void* value) {
+	DictNode** node_adr = _dict_find_node_address(dict, key);
+	if (node_adr == NULL) return;
+	(*node_adr)->value = value;
+}
+
+void* dict_get_item(Dictionary* dict, void* key) {
+	DictNode** node = _dict_find_node_address(dict, key);
+	if (node == NULL)
+		return NULL;
+	return (*node)->value;
 }
 
 void dict_del_item(Dictionary** dict, void* key) {
@@ -269,4 +282,25 @@ List* dict_get_key_list(Dictionary* dict, TreeWalkOrder walkOrder) {
 	}
 
 	return list;
+}
+
+void _dict_reset_node(DictNode* node) {
+	if (node->left != NULL) {
+		_dict_reset_node(node->left);
+		node->left = NULL;
+	}
+
+	if (node->right != NULL) {
+		_dict_reset_node(node->right);
+		node->right = NULL;
+	}
+
+	free(node);
+}
+
+void dict_reset(Dictionary* dict) {
+	if (dict->root != NULL)
+		_dict_reset_node(dict->root);
+	dict->size = 0;
+	dict->root = NULL;
 }

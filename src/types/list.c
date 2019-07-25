@@ -42,3 +42,10 @@ void list_append(List* list, void* item) {
 
 	list_add_item(list, list->count, item);
 }
+
+void list_reset(List* list) {
+	if (list->items != NULL)
+		free(list->items);
+	list->items = NULL;
+	free(list);
+}
