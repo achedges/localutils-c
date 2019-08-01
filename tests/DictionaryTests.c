@@ -22,7 +22,7 @@ int test_dict_int(int verbose) {
 			failcnt++;
 
 		} else {
-			string val = (string)dict_get_item(dict, &keys[i]);
+			string val = (string) dict_get_node_value(dict, &keys[i]);
 			if (strcmp(val, values[i]) != 0) {
 				if (verbose)
 					printf("%s Incorrect value %s for key %d (expected %s)\n", ERR_PREFIX, val, keys[i], values[i]);
@@ -53,7 +53,7 @@ int test_dict_string(int verbose) {
 				printf("%s Key %s not found\n", ERR_PREFIX, keys[i]);
 			failcnt++;
 		} else {
-			int val = *(int*)dict_get_item(dict, keys[i]);
+			int val = *(int*) dict_get_node_value(dict, keys[i]);
 			if (val != values[i]) {
 				if (verbose)
 					printf("%s Incorrect value %d for key %s (expected %d)\n", ERR_PREFIX, val, keys[i], values[i]);
@@ -90,7 +90,7 @@ int test_dict_keylist(int verbose) {
 	}
 
 	for (int i = 0; i < keylist->count; i++) {
-		string val = dict_get_item(dict, list_get_item(keylist, i));
+		string val = dict_get_node_value(dict, list_get_item(keylist, i));
 		if (strcmp(val, values[i]) != 0) {
 			if (verbose)
 				printf("%s Incorrect dict item value lookup from keylist %s (expected %s)\n", ERR_PREFIX, val, values[i]);
@@ -169,7 +169,7 @@ int test_dict_update(int verbose) {
 		dict_update_item(dict, &keys[i], &update);
 
 	for (int i = 0; i < sizeof(keys) / sizeof(int); i++) {
-		int _val = *(int*)dict_get_item(dict, &keys[i]);
+		int _val = *(int*) dict_get_node_value(dict, &keys[i]);
 		if (_val != update) {
 			if (verbose)
 				printf("%s Incorrect updated value %d (expected %d)\n", ERR_PREFIX, _val, update);
@@ -179,6 +179,96 @@ int test_dict_update(int verbose) {
 
 	if (verbose)
 		printf("test_dict_update() %s\n", !failcnt ? "passed" : "FAILED");
+
+	return failcnt;
+}
+
+int test_dict_next_prev(int verbose) {
+	int failcnt = 0;
+
+	int keys[] = { 4, 1, 7, 2, 9 };
+	int next[] = { 7, 2, 9, 4, -1 };
+	int prev[] = { 2, -1, 4, 1, 7 };
+
+	Dictionary* dict = dict_init_dictionary(INT);
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++)
+		dict_add_item(&dict, &keys[i], &keys[i]);
+
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++) {
+		DictNode* nextNode = dict_get_next(dict, &keys[i]);
+		DictNode* prevNode = dict_get_prev(dict, &keys[i]);
+
+		int value = *(int*) dict_get_node_value(dict, &keys[i]);
+		int nextValue = (nextNode != NULL) ? *(int*)(nextNode->value) : -1;
+		int prevValue = (prevNode != NULL) ? *(int*)(prevNode->value) : -1;
+
+		if (value != keys[i]) {
+			if (verbose)
+				printf("%s Incorrect node value %d (expected %d)\n", ERR_PREFIX, value, keys[i]);
+			failcnt++;
+		}
+
+		if (nextValue != next[i]) {
+			if (verbose)
+				printf("%s Incorrect next node value %d for node %d (expected %d)\n", ERR_PREFIX, nextValue, value, next[i]);
+			failcnt++;
+		}
+
+		if (prevValue != prev[i]) {
+			if (verbose)
+				printf("%s Incorrect previous node value %d for node %d (expected %d)\n", ERR_PREFIX, prevValue, value, prev[i]);
+			failcnt++;
+		}
+	}
+
+	if (verbose)
+		printf("test_dict_next_prev() %s\n", !failcnt ? "passed" : "FAILED");
+
+	return failcnt;
+}
+
+int _test_dict_parent_dfs(DictNode* node, int verbose) {
+	if (node == NULL)
+		return 0;
+
+	int failcnt = 0;
+	failcnt += _test_dict_parent_dfs(node->left, verbose);
+	failcnt += _test_dict_parent_dfs(node->right, verbose);
+
+	if (node->left != NULL && node->left->parent != node)
+	{
+		if (verbose)
+			printf("%s Incorrect parent node %d for left child %d (expected %d)\n", ERR_PREFIX, *(int*)(node->left->parent->key), *(int*)(node->left->key), *(int*)node->key);
+		failcnt++;
+	}
+
+	if (node->right != NULL && node->right->parent != node) {
+		if (verbose)
+			printf("%s Incorrect parent node %d for right child %d (expected %d)\n", ERR_PREFIX, *(int*)(node->right->parent->key), *(int*)(node->right->key), *(int*)node->key);
+		failcnt++;
+	}
+
+	return failcnt;
+}
+
+int test_dict_parent(int verbose) {
+	int failcnt = 0;
+
+	int keys[] = { 1, 2, 3, 4, 5 };
+	Dictionary* dict = dict_init_dictionary(INT);
+	for (int i = 0; i < sizeof(keys) / sizeof(int); i++)
+		dict_add_item(&dict, &keys[i], &keys[i]);
+
+	if (dict->root->parent != NULL) {
+		if (verbose)
+			printf("%s Root parent is not NULL\n", ERR_PREFIX);
+		failcnt++;
+	}
+
+	failcnt += _test_dict_parent_dfs(dict->root, verbose);
+
+	if (verbose)
+		printf("test_dict_parent() %s\n", !failcnt ? "passed" : "FAILED");
 
 	return failcnt;
 }

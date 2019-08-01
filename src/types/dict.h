@@ -26,6 +26,7 @@ typedef struct _dict_node {
 	void* value;
 	struct _dict_node* left;
 	struct _dict_node* right;
+	struct _dict_node* parent;
 } DictNode;
 
 typedef struct {
@@ -40,10 +41,15 @@ DictNode* dict_init_node();
 void dict_add_item(Dictionary** dict, void* key, void* value);
 void dict_update_item(Dictionary* dict, void* key, void* value);
 void dict_del_item(Dictionary** dict, void* key);
-void* dict_get_item(Dictionary* dict, void* key);
+DictNode* dict_get_node(Dictionary* dict, void* key);
+void* dict_get_node_value(Dictionary *dict, void *key);
 int dict_contains(Dictionary* dict, void* key);
 List* dict_get_key_list(Dictionary* dict, TreeWalkOrder walkOrder);
 void dict_reset(Dictionary* dict);
+DictNode* dict_get_max(DictNode* node);
+DictNode* dict_get_min(DictNode* node);
+DictNode* dict_get_next(Dictionary* dict, void* key);
+DictNode* dict_get_prev(Dictionary* dict, void* key);
 
 
 #endif //LOCALUTILS_DICT_H

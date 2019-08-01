@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
 	failcnt += test_dict_keylist(verbose);
 	failcnt += test_dict_balance(verbose);
 	failcnt += test_dict_update(verbose);
+	failcnt += test_dict_next_prev(verbose);
+	failcnt += test_dict_parent(verbose);
 
 	// File test functions
 	failcnt += test_file_download(verbose);

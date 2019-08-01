@@ -25,20 +25,6 @@ int _get_subtree_balance(DictNode* node) {
 	return (node == NULL) ? 0 : _get_subtree_height(node->left) - _get_subtree_height(node->right);
 }
 
-DictNode* _get_subtree_minimum(DictNode* node) {
-	DictNode* current = node;
-	while (current->left != NULL)
-		current = current->left;
-	return current;
-}
-
-DictNode* _get_subtree_maximum(DictNode* node) {
-	DictNode* current = node;
-	while (current->right != NULL)
-		current = current->right;
-	return current;
-}
-
 DictNode* _right_rotate(DictNode* node) {
 	DictNode* newroot = node->left;
 	DictNode* tmpnode = newroot->right;
@@ -76,8 +62,10 @@ DictNode* _insert(Dictionary* dict, DictNode* root, void* key, void* value) {
 	int comparison = dict->compare(key, root->key);
 	if (comparison <  0) {
 		root->left = _insert(dict, root->left, key, value);
+		root->left->parent = root;
 	} else if (comparison > 0) {
 		root->right = _insert(dict, root->right, key, value);
+		root->right->parent = root;
 	} else {
 		return root;
 	}
@@ -85,20 +73,34 @@ DictNode* _insert(Dictionary* dict, DictNode* root, void* key, void* value) {
 	root->avl_height = _max(_get_subtree_height(root->left), _get_subtree_height(root->right)) + 1;
 	int balance = _get_subtree_balance(root);
 
-	if (balance > 1 && dict->compare(key, root->left->key) < 0)
-		return _right_rotate(root);
+	if (balance > 1 && dict->compare(key, root->left->key) < 0) {
+		DictNode* r = _right_rotate(root);
+		if (r->left != NULL) r->left->parent = r;
+		if (r->right != NULL) r->right->parent = r;
+		return r;
+	}
 
-	if (balance < -1 && dict->compare(key, root->right->key) > 0)
-		return _left_rotate(root);
+	if (balance < -1 && dict->compare(key, root->right->key) > 0) {
+		DictNode* r = _left_rotate(root);
+		if (r->left != NULL) r->left->parent = r;
+		if (r->right != NULL) r->right->parent = r;
+		return r;
+	}
 
 	if (balance > 1 && dict->compare(key, root->left->key) > 0) {
 		root->left = _left_rotate(root->left);
-		return _right_rotate(root);
+		DictNode* r = _right_rotate(root);
+		if (r->left != NULL) r->left->parent = r;
+		if (r->right != NULL) r->right->parent = r;
+		return r;
 	}
 
 	if (balance < -1 && dict->compare(key, root->right->key) < 0) {
 		root->right = _right_rotate(root->right);
-		return _left_rotate(root);
+		DictNode* r = _left_rotate(root);
+		if (r->left != NULL) r->left->parent = r;
+		if (r->right != NULL) r->right->parent = r;
+		return r;
 	}
 
 	return root;
@@ -125,7 +127,7 @@ DictNode* _delete(Dictionary* dict, DictNode* root, void* key) {
 
 			free(tmp);
 		} else {
-			DictNode* tmp = _get_subtree_maximum(root->left);
+			DictNode* tmp = dict_get_max(root->left);
 			root->key = tmp->key;
 			root->value = tmp->value;
 			root->left = _delete(dict, root->left, tmp->key);
@@ -183,6 +185,7 @@ DictNode* dict_init_node() {
 	d->value = NULL;
 	d->left = NULL;
 	d->right = NULL;
+	d->parent = NULL;
 	d->avl_height = 1;
 
 	return d;
@@ -190,6 +193,7 @@ DictNode* dict_init_node() {
 
 void dict_add_item(Dictionary** dict, void* key, void* value) {
 	(*dict)->root = _insert((*dict), (*dict)->root, key, value);
+	(*dict)->root->parent = NULL;
 	(*dict)->size++;
 }
 
@@ -220,11 +224,18 @@ void dict_update_item(Dictionary* dict, void* key, void* value) {
 	(*node_adr)->value = value;
 }
 
-void* dict_get_item(Dictionary* dict, void* key) {
+DictNode* dict_get_node(Dictionary* dict, void* key) {
 	DictNode** node = _dict_find_node_address(dict, key);
 	if (node == NULL)
 		return NULL;
-	return (*node)->value;
+	return *node;
+}
+
+void* dict_get_node_value(Dictionary *dict, void *key) {
+	DictNode* node = dict_get_node(dict, key);
+	if (node == NULL)
+		return NULL;
+	return node->value;
 }
 
 void dict_del_item(Dictionary** dict, void* key) {
@@ -233,7 +244,7 @@ void dict_del_item(Dictionary** dict, void* key) {
 }
 
 int dict_contains(Dictionary* dict, void* key) {
-	return dict_get_item(dict, key) != NULL;
+	return dict_get_node_value(dict, key) != NULL;
 }
 
 void _dict_walk_key_list_inorder(DictNode* node, List* list) {
@@ -303,4 +314,52 @@ void dict_reset(Dictionary* dict) {
 		_dict_reset_node(dict->root);
 	dict->size = 0;
 	dict->root = NULL;
+}
+
+DictNode* dict_get_min(DictNode *node) {
+	DictNode* current = node;
+	while (current->left != NULL)
+		current = current->left;
+	return current;
+}
+
+DictNode* dict_get_max(DictNode *node) {
+	DictNode* current = node;
+	while (current->right != NULL)
+		current = current->right;
+	return current;
+}
+
+DictNode* dict_get_next(Dictionary* dict, void* key) {
+	DictNode* node = dict_get_node(dict, key);
+	if (node == NULL)
+		return NULL;
+
+	if (node->right != NULL)
+		return dict_get_min(node->right);
+
+	DictNode* parent = node->parent;
+	while (parent != NULL && parent->right != NULL && dict->compare(node->key, parent->right->key) == 0) {
+		node = parent;
+		parent = parent->parent;
+	}
+
+	return parent;
+}
+
+DictNode* dict_get_prev(Dictionary* dict, void* key) {
+	DictNode* node = dict_get_node(dict, key);
+	if (node == NULL)
+		return NULL;
+
+	if (node->left != NULL)
+		return dict_get_max(node->left);
+
+	DictNode* parent = node->parent;
+	while (parent != NULL && parent->left != NULL && dict->compare(node->key, parent->left->key) == 0) {
+		node = parent;
+		parent = parent->parent;
+	}
+
+	return parent;
 }
