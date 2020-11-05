@@ -34,124 +34,138 @@ JsonElement* jsonparser_parse(JsonParser* parser, string input)
 
 // implementations
 
-void set_token(JsonToken** token, JsonTokenType type, string value)
+JsonToken* get_token(JsonTokenType type, string value)
 {
-	if (*token == NULL)
-		*token = malloc(sizeof(JsonToken));
+	JsonToken* token = malloc(sizeof(JsonToken));
+	token->type = type;
+	token->value = value;
+	token->next = NULL;
+	return token;
+}
 
-	(*token)->type = type;
-	(*token)->value = value;
-	(*token)->next = NULL;
+string get_identifier_value(JsonParser* parser)
+{
+	parser->i++;
+
+	int escaped = 0;
+	size_t buffersize = 8;
+	size_t valuelen = 0;
+
+	string value = malloc(sizeof(char) * buffersize);
+	while (parser->input[parser->i] != '"' || escaped)
+	{
+		if (parser->i == parser->n)
+			break;
+
+		if (parser->input[parser->i] == '\\')
+			escaped = !escaped;
+
+		if (valuelen == (buffersize - 1)) // save a spot for \0
+		{
+			buffersize = (int)(buffersize * 1.5);
+			value = realloc(value, buffersize);
+		}
+
+		value[valuelen++] = parser->input[parser->i];
+		parser->i++;
+	}
+
+	value[valuelen] = '\0';
+
+	return value;
+}
+
+string get_literal_value(JsonParser* parser)
+{
+	size_t buffersize = 8;
+	size_t valuelen = 0;
+
+	string literal = malloc(sizeof(char) * buffersize);
+	while (parser->input[parser->i] != ',' && parser->input[parser->i] != ']' && parser->input[parser->i] != '}')
+	{
+		if (parser->i == parser->n)
+			break;
+
+		if (valuelen == (buffersize - 1)) // save a spot for \0
+		{
+			buffersize = (int)(buffersize * 1.5);
+			literal = realloc(literal, buffersize);
+		}
+
+		literal[valuelen++] = parser->input[parser->i];
+		parser->i++;
+	}
+
+	// back up one so we can capture the ending token in the stream
+	parser->i -= 1;
+	literal[valuelen-1] = '\0';
+
+	return literal;
 }
 
 JsonToken* tokenize(JsonParser* parser)
 {
-	if (parser->tokenStream == NULL)
-		parser->tokenStream = malloc(sizeof(JsonToken));
-
-	JsonToken* token = parser->tokenStream;
-	JsonToken** root = &token;
-
-	size_t buffersize;
-	size_t valuelen;
+	JsonToken* head = NULL;
+	JsonToken* prev = NULL;
 
 	while (parser->i < parser->n)
 	{
-		if (parser->input[parser->i] == ' ' || parser->input[parser->i] == '\t' || parser->input[parser->i] == '\n')
+		JsonToken* token = NULL;
+
+		switch (parser->input[parser->i])
 		{
-			parser->i++;
-			continue;
-		}
-		else if (parser->input[parser->i] == '{')
-		{
-			set_token(&token, OPEN_BRACE, "{");
-
-		}
-		else if (parser->input[parser->i] == '}')
-		{
-			set_token(&token, CLOSE_BRACE, "}");
-
-		}
-		else if (parser->input[parser->i] == '[')
-		{
-			set_token(&token, OPEN_BRACKET, "[");
-
-		}
-		else if (parser->input[parser->i] == ']')
-		{
-			set_token(&token, CLOSE_BRACE, "]");
-
-		}
-		else if (parser->input[parser->i] == ',')
-		{
-			set_token(&token, COMMA, ",");
-
-		}
-		else if (parser->input[parser->i] == ':')
-		{
-			set_token(&token, COLON, ":");
-
-		}
-		else if (parser->input[parser->i] == '"')
-		{
-			parser->i++;
-
-			int escaped = 0;
-			buffersize = 8;
-			valuelen = 0;
-
-			string value = malloc(sizeof(char) * buffersize);
-			while (parser->input[parser->i] != '"' || escaped)
-			{
-				if (parser->i == parser->n)
-					break;
-
-				if (parser->input[parser->i] == '\\')
-					escaped = !escaped;
-
-				if (valuelen == (buffersize - 1)) // save a spot for \0
-				{
-					buffersize = (int)(buffersize * 1.5);
-					value = realloc(value, buffersize);
-				}
-
-				value[valuelen++] = parser->input[parser->i];
+			case ' ':
+			case '\t':
+			case '\n':
 				parser->i++;
-			}
+				continue;
 
-			value[valuelen] = '\0';
-			set_token(&token, IDENTIFIER, value);
-		}
-		else
-		{
-			buffersize = 8;
-			valuelen = 0;
+			case '{':
+				token = get_token(OPEN_BRACE, "{");
+				break;
 
-			string literal = malloc(sizeof(char) * buffersize);
-			while (parser->input[parser->i] != ',' && parser->input[parser->i] != ']' && parser->input[parser->i] != '}')
-			{
-				if (parser->i == parser->n)
-					break;
+			case '}':
+				token = get_token(CLOSE_BRACE, "}");
+				break;
 
-				if (valuelen == (buffersize - 1)) // save a spot for \0
-				{
-					buffersize = (int)(buffersize * 1.5);
-					literal = realloc(literal, buffersize);
-				}
+			case '[':
+				token = get_token(OPEN_BRACKET, "[");
+				break;
 
-				literal[valuelen++] = parser->input[parser->i];
-				parser->i++;
-			}
+			case ']':
+				token = get_token(CLOSE_BRACE, "]");
+				break;
 
-			// back up one so we can capture the ending token in the stream
-			parser->i -= 1;
-			literal[valuelen] = '\0';
-			set_token(&token, LITERAL, literal);
+			case ',':
+				token = get_token(COMMA, ",");
+				break;
+
+			case ':':
+				token = get_token(COLON, ":");
+				break;
+
+			case '"':
+				token = get_token(IDENTIFIER, get_identifier_value(parser));
+				break;
+
+			default:
+				token = get_token(LITERAL, get_literal_value(parser));
+				break;
 		}
 
 		parser->i++;
-		token = token->next;
+
+		if (head == NULL)
+		{
+			head = token;
+			prev = head;
+		}
+		else
+		{
+			prev->next = token;
+			prev = prev->next;
+		}
 	}
 
-	return *root;
+	return head;
 }

@@ -9,7 +9,7 @@ int test_deserialize(int verbose) {
 	int failcnt = 0;
 
 	JsonParser* parser = jsonparser_init();
-	JsonElement* result = jsonparser_parse(parser, "{ \"property\": \"value\" }");
+	JsonElement* result = jsonparser_parse(parser, "{ \"property\": false }");
 
 	if (result == NULL)
 		failcnt += 1;
