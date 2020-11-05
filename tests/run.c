@@ -39,6 +39,9 @@ int main(int argc, char** argv) {
 	failcnt += test_file_download(verbose);
 	failcnt += test_file_extract(verbose);
 
+	// JsonParser test functions
+	failcnt += test_deserialize(verbose);
+
 	if (!failcnt) {
 		printf("\nAll tests passed\n");
 		return 0;

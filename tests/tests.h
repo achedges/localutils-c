@@ -10,6 +10,7 @@
 #include "../src/types/list.h"
 #include "../src/types/dict.h"
 #include "../src/files/files.h"
+#include "../src/json/jsonparser.h"
 
 #ifndef LOCALUTILS_TESTS_H
 #define LOCALUTILS_TESTS_H
@@ -34,6 +35,9 @@ int test_dict_parent(int verbose);
 // File tests
 int test_file_download(int verbose);
 int test_file_extract(int verbose);
+
+// JsonParser tests
+int test_deserialize(int verbose);
 
 
 #endif //LOCALUTILS_TESTS_H
