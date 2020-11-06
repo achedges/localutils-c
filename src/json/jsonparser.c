@@ -9,11 +9,12 @@
 // prototypes
 
 JsonToken* tokenize(JsonParser* parser);
+
 JsonElement* parse_array(JsonToken* stream);
+
 JsonElement* parse_object(JsonToken* stream);
 
-JsonParser* jsonparser_init()
-{
+JsonParser* jsonparser_init() {
 	JsonParser* ret = malloc(sizeof(JsonParser));
 	ret->n = 0;
 	ret->i = 0;
@@ -22,37 +23,78 @@ JsonParser* jsonparser_init()
 	return ret;
 }
 
-JsonElement* jsonparser_parse(JsonParser* parser, string input)
-{
+JsonElement* jsonparser_parse(JsonParser* parser, string input) {
 	parser->input = input;
 	parser->n = strlen(parser->input);
 
 	parser->tokenStream = tokenize(parser);
 
-	if (parser->tokenStream == NULL)
+	if (parser->tokenStream == NULL) {
 		return parser->result;
+	}
 
-	if (parser->tokenStream->type == JSON_ARRAY)
+	if (parser->tokenStream->type == OPEN_BRACKET) {
 		parser->result = parse_array(parser->tokenStream);
-	else if (parser->tokenStream->type == JSON_OBJECT)
+	} else if (parser->tokenStream->type == OPEN_BRACE) {
 		parser->result = parse_object(parser->tokenStream);
+	}
 
 	return parser->result;
+}
+
+Dictionary* jsonparser_get_dict(JsonElement* element) {
+	return element->type == JSON_OBJECT ? element->objectValue : NULL;
+}
+
+List* jsonparser_get_list(JsonElement* element) {
+	return element->type == JSON_ARRAY ? element->arrayValue : NULL;
+}
+
+string jsonparser_get_string(JsonElement* element) {
+	return element->type == JSON_STRING ? element->stringValue : NULL;
+}
+
+long* jsonparser_get_long(JsonElement* element) {
+	return element->type == JSON_INT ? element->intValue : NULL;
+}
+
+double* jsonparser_get_double(JsonElement* element) {
+	return element->type == JSON_FLOAT ? element->doubleValue : NULL;
+}
+
+bool* jsonparser_get_bool(JsonElement* element) {
+	return element->type == JSON_BOOL ? element->boolValue : NULL;
 }
 
 
 
 // implementations
 
-JsonElement* new_bool(bool value) {
+JsonElement* new_json_element() {
 	JsonElement* element = malloc(sizeof(JsonElement));
+	element->objectValue = NULL;
+	element->arrayValue = NULL;
+	element->boolValue = NULL;
+	element->doubleValue = NULL;
+	element->intValue = NULL;
+	element->stringValue = NULL;
+	element->type = NOT_SET;
+	return element;
+}
+
+JsonElement* new_bool(bool value) {
+	JsonElement* element = new_json_element();
 	element->type = JSON_BOOL;
-	element->boolValue = value;
+
+	bool* boolval = malloc(sizeof(bool));
+	(*boolval) = value;
+
+	element->boolValue = boolval;
 	return element;
 }
 
 JsonElement* new_null() {
-	JsonElement* element = malloc(sizeof(JsonElement));
+	JsonElement* element = new_json_element();
 	element->type = JSON_NULL;
 	return element;
 }
@@ -65,46 +107,58 @@ JsonElement* new_string(string value) {
 }
 
 JsonElement* new_integer(string text) {
-	JsonElement* element = malloc(sizeof(JsonElement));
+	JsonElement* element = new_json_element();
 	element->type = JSON_INT;
-	element->intValue = strtol(text, NULL, 10);
-	element->doubleValue = strtod(text, NULL);
+
+	long* longval = malloc(sizeof(long));
+	(*longval) = strtol(text, NULL, 10);
+
+	double* doubleval = malloc(sizeof(double));
+	(*doubleval) = (double)(*longval);
+
+	element->intValue = longval;
+	element->doubleValue = doubleval;
+
 	return element;
 }
 
 JsonElement* new_float(string text) {
-	JsonElement* element = malloc(sizeof(JsonElement));
+	JsonElement* element = new_json_element();
 	element->type = JSON_FLOAT;
-	element->doubleValue = strtod(text, NULL);
+
+	double* doubleval = malloc(sizeof(double));
+	(*doubleval) = strtod(text, NULL);
+
+	element->doubleValue = doubleval;
 	return element;
 }
 
 JsonElement* new_array() {
-	JsonElement* element = malloc(sizeof(JsonElement));
+	JsonElement* element = new_json_element();
 	element->type = JSON_ARRAY;
 	element->arrayValue = list_init(sizeof(JsonElement), 0);
 	return element;
 }
 
 JsonElement* new_object() {
-	JsonElement* element = malloc(sizeof(JsonElement));
+	JsonElement* element = new_json_element();
 	element->type = JSON_OBJECT;
 	element->objectValue = dict_init_dictionary(STRING);
 	return element;
 }
 
-JsonElement* parse_literal(string text)
-{
-	if (strcmp(text, "true") == 0)
+JsonElement* parse_literal(string text) {
+	if (strcmp(text, "true") == 0) {
 		return new_bool(1);
-	else if (strcmp(text, "false") == 0)
+	} else if (strcmp(text, "false") == 0) {
 		return new_bool(0);
-	else if (strcmp(text, "null") == 0)
+	} else if (strcmp(text, "null") == 0) {
 		return new_null();
-	else if (strchr(text, '.') != NULL)
+	} else if (strchr(text, '.') != NULL) {
 		return new_float(text);
-	else
+	} else {
 		return new_integer(text);
+	}
 }
 
 JsonElement* parse_array(JsonToken* stream) {
@@ -130,8 +184,9 @@ JsonElement* parse_array(JsonToken* stream) {
 		}
 
 		token = token->next;
-		if (token == NULL)
+		if (token == NULL) {
 			break;
+		}
 	}
 
 	return list;
@@ -142,11 +197,12 @@ JsonElement* parse_object(JsonToken* stream) {
 	JsonToken* key = stream->next;
 
 	while (key->type != CLOSE_BRACE) {
-		if (key->type == COMMA)
+		if (key->type == COMMA) {
 			key = key->next;
+		}
 
 		JsonToken* separator = key->next;
-		JsonToken* value = key->next;
+		JsonToken* value = separator->next;
 
 		switch (value->type) {
 			case OPEN_BRACE:
@@ -165,16 +221,16 @@ JsonElement* parse_object(JsonToken* stream) {
 				break;
 		}
 
-		key = key->next;
-		if (key == NULL)
+		key = value->next;
+		if (key == NULL) {
 			break;
+		}
 	}
 
 	return obj;
 }
 
-JsonToken* get_token(JsonTokenType type, string value)
-{
+JsonToken* get_token(JsonTokenType type, string value) {
 	JsonToken* token = malloc(sizeof(JsonToken));
 	token->type = type;
 	token->value = value;
@@ -182,8 +238,7 @@ JsonToken* get_token(JsonTokenType type, string value)
 	return token;
 }
 
-string get_identifier_value(JsonParser* parser)
-{
+string get_identifier_value(JsonParser* parser) {
 	parser->i++;
 
 	int escaped = 0;
@@ -191,17 +246,18 @@ string get_identifier_value(JsonParser* parser)
 	size_t valuelen = 0;
 
 	string value = malloc(sizeof(char) * buffersize);
-	while (parser->input[parser->i] != '"' || escaped)
-	{
-		if (parser->i == parser->n)
+	while (parser->input[parser->i] != '"' || escaped) {
+		if (parser->i == parser->n) {
 			break;
+		}
 
-		if (parser->input[parser->i] == '\\')
+		if (parser->input[parser->i] == '\\') {
 			escaped = !escaped;
+		}
 
 		if (valuelen == (buffersize - 1)) // save a spot for \0
 		{
-			buffersize = (int)(buffersize * 1.5);
+			buffersize = (int) (buffersize * 1.5);
 			value = realloc(value, buffersize);
 		}
 
@@ -214,20 +270,19 @@ string get_identifier_value(JsonParser* parser)
 	return value;
 }
 
-string get_literal_value(JsonParser* parser)
-{
+string get_literal_value(JsonParser* parser) {
 	size_t buffersize = 8;
 	size_t valuelen = 0;
 
 	string literal = malloc(sizeof(char) * buffersize);
-	while (parser->input[parser->i] != ',' && parser->input[parser->i] != ']' && parser->input[parser->i] != '}')
-	{
-		if (parser->i == parser->n)
+	while (parser->input[parser->i] != ',' && parser->input[parser->i] != ']' && parser->input[parser->i] != '}') {
+		if (parser->i == parser->n) {
 			break;
+		}
 
 		if (valuelen == (buffersize - 1)) // save a spot for \0
 		{
-			buffersize = (int)(buffersize * 1.5);
+			buffersize = (int) (buffersize * 1.5);
 			literal = realloc(literal, buffersize);
 		}
 
@@ -237,22 +292,19 @@ string get_literal_value(JsonParser* parser)
 
 	// back up one so we can capture the ending token in the stream
 	parser->i -= 1;
-	literal[valuelen-1] = '\0';
+	literal[valuelen - 1] = '\0';
 
 	return literal;
 }
 
-JsonToken* tokenize(JsonParser* parser)
-{
+JsonToken* tokenize(JsonParser* parser) {
 	JsonToken* head = NULL;
 	JsonToken* prev = NULL;
 
-	while (parser->i < parser->n)
-	{
+	while (parser->i < parser->n) {
 		JsonToken* token = NULL;
 
-		switch (parser->input[parser->i])
-		{
+		switch (parser->input[parser->i]) {
 			case ' ':
 			case '\t':
 			case '\n':
@@ -294,13 +346,10 @@ JsonToken* tokenize(JsonParser* parser)
 
 		parser->i++;
 
-		if (head == NULL)
-		{
+		if (head == NULL) {
 			head = token;
 			prev = head;
-		}
-		else
-		{
+		} else {
 			prev->next = token;
 			prev = prev->next;
 		}
