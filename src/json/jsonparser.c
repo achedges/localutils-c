@@ -9,6 +9,8 @@
 // prototypes
 
 JsonToken* tokenize(JsonParser* parser);
+JsonElement* parse_array(JsonToken* stream);
+JsonElement* parse_object(JsonToken* stream);
 
 JsonParser* jsonparser_init()
 {
@@ -27,12 +29,149 @@ JsonElement* jsonparser_parse(JsonParser* parser, string input)
 
 	parser->tokenStream = tokenize(parser);
 
-	return NULL;
+	if (parser->tokenStream == NULL)
+		return parser->result;
+
+	if (parser->tokenStream->type == JSON_ARRAY)
+		parser->result = parse_array(parser->tokenStream);
+	else if (parser->tokenStream->type == JSON_OBJECT)
+		parser->result = parse_object(parser->tokenStream);
+
+	return parser->result;
 }
 
 
 
 // implementations
+
+JsonElement* new_bool(bool value) {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_BOOL;
+	element->boolValue = value;
+	return element;
+}
+
+JsonElement* new_null() {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_NULL;
+	return element;
+}
+
+JsonElement* new_string(string value) {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_STRING;
+	element->stringValue = value;
+	return element;
+}
+
+JsonElement* new_integer(string text) {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_INT;
+	element->intValue = strtol(text, NULL, 10);
+	element->doubleValue = strtod(text, NULL);
+	return element;
+}
+
+JsonElement* new_float(string text) {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_FLOAT;
+	element->doubleValue = strtod(text, NULL);
+	return element;
+}
+
+JsonElement* new_array() {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_ARRAY;
+	element->arrayValue = list_init(sizeof(JsonElement), 0);
+	return element;
+}
+
+JsonElement* new_object() {
+	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = JSON_OBJECT;
+	element->objectValue = dict_init_dictionary(STRING);
+	return element;
+}
+
+JsonElement* parse_literal(string text)
+{
+	if (strcmp(text, "true") == 0)
+		return new_bool(1);
+	else if (strcmp(text, "false") == 0)
+		return new_bool(0);
+	else if (strcmp(text, "null") == 0)
+		return new_null();
+	else if (strchr(text, '.') != NULL)
+		return new_float(text);
+	else
+		return new_integer(text);
+}
+
+JsonElement* parse_array(JsonToken* stream) {
+	JsonElement* list = new_array();
+	JsonToken* token = stream->next;
+
+	while (token->type != CLOSE_BRACKET) {
+		switch (token->type) {
+			case IDENTIFIER:
+				list_append(list->arrayValue, new_string(token->value));
+				break;
+			case LITERAL:
+				list_append(list->arrayValue, parse_literal(token->value));
+				break;
+			case OPEN_BRACE:
+				list_append(list->arrayValue, parse_object(stream));
+				break;
+			case OPEN_BRACKET:
+				list_append(list->arrayValue, parse_array(stream));
+				break;
+			default:
+				break;
+		}
+
+		token = token->next;
+		if (token == NULL)
+			break;
+	}
+
+	return list;
+}
+
+JsonElement* parse_object(JsonToken* stream) {
+	JsonElement* obj = new_object();
+	JsonToken* key = stream->next;
+
+	while (key->type != CLOSE_BRACE) {
+		if (key->type == COMMA)
+			key = key->next;
+
+		JsonToken* separator = key->next;
+		JsonToken* value = key->next;
+
+		switch (value->type) {
+			case OPEN_BRACE:
+				dict_add_item(&obj->objectValue, key->value, parse_object(stream));
+				break;
+			case OPEN_BRACKET:
+				dict_add_item(&obj->objectValue, key->value, parse_array(stream));
+				break;
+			case IDENTIFIER:
+				dict_add_item(&obj->objectValue, key->value, new_string(value->value));
+				break;
+			case LITERAL:
+				dict_add_item(&obj->objectValue, key->value, parse_literal(value->value));
+				break;
+			default:
+				break;
+		}
+
+		key = key->next;
+		if (key == NULL)
+			break;
+	}
+
+	return obj;
+}
 
 JsonToken* get_token(JsonTokenType type, string value)
 {

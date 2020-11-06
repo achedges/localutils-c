@@ -7,6 +7,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include "../types/dict.h"
+#include "../types/list.h"
 #include "../types/types.h"
 
 typedef enum
@@ -42,7 +45,12 @@ typedef struct JsonToken
 typedef struct
 {
 	JsonType type;
-	void* value;
+	bool boolValue;
+	string stringValue;
+	long intValue;
+	double doubleValue;
+	List* arrayValue;
+	Dictionary* objectValue;
 } JsonElement;
 
 typedef struct
