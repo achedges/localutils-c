@@ -9,16 +9,15 @@
 // prototypes
 
 JsonToken* tokenize(JsonParser* parser);
-
-JsonElement* parse_array(JsonToken* stream);
-
-JsonElement* parse_object(JsonToken* stream);
+JsonToken* next_token(JsonParser* parser);
+JsonElement* parse_array(JsonParser* parser);
+JsonElement* parse_object(JsonParser* parser);
 
 JsonParser* jsonparser_init() {
 	JsonParser* ret = malloc(sizeof(JsonParser));
 	ret->n = 0;
 	ret->i = 0;
-	ret->tokenStream = NULL;
+	ret->currentToken = NULL;
 	ret->result = NULL;
 	return ret;
 }
@@ -27,16 +26,16 @@ JsonElement* jsonparser_parse(JsonParser* parser, string input) {
 	parser->input = input;
 	parser->n = strlen(parser->input);
 
-	parser->tokenStream = tokenize(parser);
+	parser->currentToken = tokenize(parser);
 
-	if (parser->tokenStream == NULL) {
+	if (parser->currentToken == NULL) {
 		return parser->result;
 	}
 
-	if (parser->tokenStream->type == OPEN_BRACKET) {
-		parser->result = parse_array(parser->tokenStream);
-	} else if (parser->tokenStream->type == OPEN_BRACE) {
-		parser->result = parse_object(parser->tokenStream);
+	if (parser->currentToken->type == OPEN_BRACKET) {
+		parser->result = parse_array(parser);
+	} else if (parser->currentToken->type == OPEN_BRACE) {
+		parser->result = parse_object(parser);
 	}
 
 	return parser->result;
@@ -153,7 +152,7 @@ JsonElement* parse_literal(string text) {
 	} else if (strcmp(text, "false") == 0) {
 		return new_bool(0);
 	} else if (strcmp(text, "null") == 0) {
-		return new_null();
+		return NULL;
 	} else if (strchr(text, '.') != NULL) {
 		return new_float(text);
 	} else {
@@ -161,9 +160,9 @@ JsonElement* parse_literal(string text) {
 	}
 }
 
-JsonElement* parse_array(JsonToken* stream) {
+JsonElement* parse_array(JsonParser* parser) { // needs to accept JsonParser*, not JsonToken*
 	JsonElement* list = new_array();
-	JsonToken* token = stream->next;
+	JsonToken* token = next_token(parser);
 
 	while (token->type != CLOSE_BRACKET) {
 		switch (token->type) {
@@ -174,16 +173,16 @@ JsonElement* parse_array(JsonToken* stream) {
 				list_append(list->arrayValue, parse_literal(token->value));
 				break;
 			case OPEN_BRACE:
-				list_append(list->arrayValue, parse_object(stream));
+				list_append(list->arrayValue, parse_object(parser));
 				break;
 			case OPEN_BRACKET:
-				list_append(list->arrayValue, parse_array(stream));
+				list_append(list->arrayValue, parse_array(parser));
 				break;
 			default:
 				break;
 		}
 
-		token = token->next;
+		token = next_token(parser);
 		if (token == NULL) {
 			break;
 		}
@@ -192,24 +191,28 @@ JsonElement* parse_array(JsonToken* stream) {
 	return list;
 }
 
-JsonElement* parse_object(JsonToken* stream) {
+JsonElement* parse_object(JsonParser* parser) { // needs to accept JsonParser*, not JsonToken*
+
+	// I think this recursion is causing an infinite loop, since 'stream' is being passed through each level, but when it returns to the outer scope
+	// the pointer is unchanged.
+
 	JsonElement* obj = new_object();
-	JsonToken* key = stream->next;
+	JsonToken* key = next_token(parser);
 
 	while (key->type != CLOSE_BRACE) {
 		if (key->type == COMMA) {
-			key = key->next;
+			key = next_token(parser);
 		}
 
-		JsonToken* separator = key->next;
-		JsonToken* value = separator->next;
+		JsonToken* separator = next_token(parser);
+		JsonToken* value = next_token(parser);
 
 		switch (value->type) {
 			case OPEN_BRACE:
-				dict_add_item(&obj->objectValue, key->value, parse_object(stream));
+				dict_add_item(&obj->objectValue, key->value, parse_object(parser));
 				break;
 			case OPEN_BRACKET:
-				dict_add_item(&obj->objectValue, key->value, parse_array(stream));
+				dict_add_item(&obj->objectValue, key->value, parse_array(parser));
 				break;
 			case IDENTIFIER:
 				dict_add_item(&obj->objectValue, key->value, new_string(value->value));
@@ -221,7 +224,7 @@ JsonElement* parse_object(JsonToken* stream) {
 				break;
 		}
 
-		key = value->next;
+		key = next_token(parser);
 		if (key == NULL) {
 			break;
 		}
@@ -238,21 +241,21 @@ JsonToken* get_token(JsonTokenType type, string value) {
 	return token;
 }
 
+JsonToken* next_token(JsonParser* parser) {
+	parser->currentToken = parser->currentToken->next;
+	return parser->currentToken;
+}
+
 string get_identifier_value(JsonParser* parser) {
 	parser->i++;
 
-	int escaped = 0;
 	size_t buffersize = 8;
 	size_t valuelen = 0;
 
 	string value = malloc(sizeof(char) * buffersize);
-	while (parser->input[parser->i] != '"' || escaped) {
+	while (parser->input[parser->i] != '"' || parser->input[parser->i-1] == '\\') {
 		if (parser->i == parser->n) {
 			break;
-		}
-
-		if (parser->input[parser->i] == '\\') {
-			escaped = !escaped;
 		}
 
 		if (valuelen == (buffersize - 1)) // save a spot for \0
@@ -292,7 +295,7 @@ string get_literal_value(JsonParser* parser) {
 
 	// back up one so we can capture the ending token in the stream
 	parser->i -= 1;
-	literal[valuelen - 1] = '\0';
+	literal[valuelen] = '\0';
 
 	return literal;
 }
@@ -324,7 +327,7 @@ JsonToken* tokenize(JsonParser* parser) {
 				break;
 
 			case ']':
-				token = get_token(CLOSE_BRACE, "]");
+				token = get_token(CLOSE_BRACKET, "]");
 				break;
 
 			case ',':
@@ -355,5 +358,7 @@ JsonToken* tokenize(JsonParser* parser) {
 		}
 	}
 
-	return head;
+	parser->currentToken = head;
+
+	return parser->currentToken;
 }

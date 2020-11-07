@@ -130,7 +130,7 @@ int test_json_object_parse(int verbose) {
 		return 1;
 	}
 
-	if (strcmp(jsonparser_get_string(list_get_item(list, 2)), "\"three\"") != 0) {
+	if (strcmp(jsonparser_get_string(list_get_item(list, 2)), "\\\"three\\\"") != 0) {
 		printf("Inorrect value found at [object][list][2]\n");
 		return 1;
 	}

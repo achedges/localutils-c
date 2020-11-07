@@ -54,7 +54,7 @@ typedef struct {
 	string input;
 	size_t n;
 	int i;
-	JsonToken* tokenStream;
+	JsonToken* currentToken;
 	JsonElement* result;
 } JsonParser;
 

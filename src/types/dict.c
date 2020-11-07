@@ -244,7 +244,7 @@ void dict_del_item(Dictionary** dict, void* key) {
 }
 
 int dict_contains(Dictionary* dict, void* key) {
-	return dict_get_node_value(dict, key) != NULL;
+	return dict_get_node(dict, key) != NULL;
 }
 
 void _dict_walk_key_list_inorder(DictNode* node, List* list) {
