@@ -4,6 +4,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include "../src/types/types.h"
@@ -37,7 +38,8 @@ int test_file_download(int verbose);
 int test_file_extract(int verbose);
 
 // JsonParser tests
-int test_deserialize(int verbose);
+int test_json_object_parse(int verbose);
+int test_json_array_parse(int verbose);
 
 
 #endif //LOCALUTILS_TESTS_H

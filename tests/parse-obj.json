@@ -1,0 +1,14 @@
+{
+	"object": {
+		"string": "stringvalue",
+		"int": 1,
+		"float": 1.123,
+		"bool": true,
+		"null": null,
+		"list": [
+			"one",
+			"two",
+			"\"three\""
+		]
+	}
+}
