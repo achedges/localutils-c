@@ -42,7 +42,7 @@ int test_json_object_parse(int verbose) {
 	}
 
 	if (!dict_contains(rootobj, "object")) {
-		printf("[result] does not contain 'object' property");
+		printf("[result] does not contain 'object' property\n");
 		return 1;
 	}
 
@@ -148,10 +148,53 @@ int test_json_array_parse(int verbose) {
 	JsonParser* parser = jsonparser_init();
 	JsonElement* result = jsonparser_parse(parser, jsonString);
 
-	if (result == NULL) failcnt++;
+	if (result == NULL) {
+		printf("[result] is NULL\n");
+		return 1;
+	}
 
-	if (verbose)
-		printf("test_json_array_parse() %s\n", !failcnt ? "passed" : "FAILED");
+	List* list = jsonparser_get_list(result);
 
-	return failcnt;
+	if (list == NULL) {
+		printf("[result] is not a List\n");
+		return 1;
+	}
+
+	if (list->count != 2) {
+		printf("[result] incorrect size\n");
+		return 1;
+	}
+
+	for (int i = 0; i < list->count; i++) {
+		Dictionary* obj = jsonparser_get_dict(list_get_item(list, i));
+
+		char key[16];
+		char value[16];
+		sprintf(key, "some-key-%i", i);
+		sprintf(value, "some-value-%i", i);
+
+		if (!dict_contains(obj, "key")) {
+			printf("[object] does not contain 'key' property\n");
+			return 1;
+		}
+
+		if (!dict_contains(obj, "value")) {
+			printf("[object] does not contain 'value' property\n");
+			return 1;
+		}
+
+		if (strcmp(jsonparser_get_string(dict_get_node_value(obj, "key")), key) != 0) {
+			printf("Incorrect value found at [list][%i]\n", i);
+			return 1;
+		}
+
+		if (strcmp(jsonparser_get_string(dict_get_node_value(obj, "value")), value) != 0) {
+			printf("Incorrect value found at [list][%i]\n", i);
+			return 1;
+		}
+	}
+
+	printf("test_json_array_parse() passed\n");
+
+	return 0;
 }
