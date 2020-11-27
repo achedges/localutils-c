@@ -92,12 +92,6 @@ JsonElement* new_bool(bool value) {
 	return element;
 }
 
-JsonElement* new_null() {
-	JsonElement* element = new_json_element();
-	element->type = JSON_NULL;
-	return element;
-}
-
 JsonElement* new_string(string value) {
 	JsonElement* element = malloc(sizeof(JsonElement));
 	element->type = JSON_STRING;
@@ -191,10 +185,7 @@ JsonElement* parse_array(JsonParser* parser) { // needs to accept JsonParser*, n
 	return list;
 }
 
-JsonElement* parse_object(JsonParser* parser) { // needs to accept JsonParser*, not JsonToken*
-
-	// I think this recursion is causing an infinite loop, since 'stream' is being passed through each level, but when it returns to the outer scope
-	// the pointer is unchanged.
+JsonElement* parse_object(JsonParser* parser) {
 
 	JsonElement* obj = new_object();
 	JsonToken* key = next_token(parser);

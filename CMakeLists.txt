@@ -17,10 +17,10 @@ find_library(ZIP_LIB zip PATH /usr/local/lib/libzip NO_DEFAULT_PATH)
 
 add_library(types STATIC src/types/comparers.c src/types/dict.c src/types/list.c)
 add_library(files STATIC src/files/files.c)
-add_library(json STATIC src/json/jsonparser.c)
+add_library(json STATIC src/json/jsonparser.c src/json/tokenizer.c)
 target_link_libraries(files PUBLIC ${CURL_LIB} ${ZIP_LIB})
 
-add_executable(runtests tests/run.c tests/ListTests.c tests/DictionaryTests.c tests/FileTests.c tests/JsonTests.c)
+add_executable(runtests tests/run.c tests/ListTests.c tests/DictionaryTests.c tests/FileTests.c tests/JsonTests.c src/json/tokenizer.c)
 target_link_libraries(runtests types files json)
 
 set_target_properties(types PROPERTIES PUBLIC_HEADER "src/types/types.h;src/types/comparers.h;src/types/list.h;src/types/dict.h")
