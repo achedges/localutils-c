@@ -12,7 +12,6 @@
 #include "../types/types.h"
 
 typedef enum {
-	NOT_SET,
 	JSON_OBJECT,
 	JSON_ARRAY,
 	JSON_BOOL,
