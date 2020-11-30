@@ -2,9 +2,9 @@
 // Created by Adam Hedges on 11/27/20.
 //
 
-#include "jsonparser.h"
+#include "tokenizer.h"
 
-JsonToken* get_token(JsonTokenType type, string value) {
+JsonToken* init_token(JsonTokenType type, string value) {
 	JsonToken* token = malloc(sizeof(JsonToken));
 	token->type = type;
 	token->value = value;
@@ -12,7 +12,7 @@ JsonToken* get_token(JsonTokenType type, string value) {
 	return token;
 }
 
-string get_identifier_value(string* input_ptr, size_t* input_pos, size_t total_len) {
+string parse_identifier_value(string* input_ptr, size_t* input_pos, size_t total_len) {
 	size_t i = *input_pos + 1;
 
 	size_t buffersize = 8;
@@ -39,7 +39,7 @@ string get_identifier_value(string* input_ptr, size_t* input_pos, size_t total_l
 	return value;
 }
 
-string get_literal_value(string* input_ptr, size_t* input_pos, size_t total_len) {
+string parse_literal_value(string* input_ptr, size_t* input_pos, size_t total_len) {
 	size_t i = *input_pos;
 	size_t buffersize = 8;
 	size_t valuelen = 0;
@@ -85,35 +85,35 @@ JsonToken* tokenize(string* input_ptr) {
 				continue;
 
 			case '{':
-				token = get_token(OPEN_BRACE, "{");
+				token = init_token(OPEN_BRACE, "{");
 				break;
 
 			case '}':
-				token = get_token(CLOSE_BRACE, "}");
+				token = init_token(CLOSE_BRACE, "}");
 				break;
 
 			case '[':
-				token = get_token(OPEN_BRACKET, "[");
+				token = init_token(OPEN_BRACKET, "[");
 				break;
 
 			case ']':
-				token = get_token(CLOSE_BRACKET, "]");
+				token = init_token(CLOSE_BRACKET, "]");
 				break;
 
 			case ',':
-				token = get_token(COMMA, ",");
+				token = init_token(COMMA, ",");
 				break;
 
 			case ':':
-				token = get_token(COLON, ":");
+				token = init_token(COLON, ":");
 				break;
 
 			case '"':
-				token = get_token(IDENTIFIER, get_identifier_value(input_ptr, &i, n));
+				token = init_token(IDENTIFIER, parse_identifier_value(input_ptr, &i, n));
 				break;
 
 			default:
-				token = get_token(LITERAL, get_literal_value(input_ptr, &i, n));
+				token = init_token(LITERAL, parse_literal_value(input_ptr, &i, n));
 				break;
 		}
 

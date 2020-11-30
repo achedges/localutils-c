@@ -8,7 +8,6 @@
 
 // prototypes
 
-JsonToken* tokenize(JsonParser* parser);
 JsonToken* next_token(JsonParser* parser);
 JsonElement* parse_array(JsonParser* parser);
 JsonElement* parse_object(JsonParser* parser);
@@ -26,7 +25,7 @@ JsonElement* jsonparser_parse(JsonParser* parser, string input) {
 	parser->input = input;
 	parser->n = strlen(parser->input);
 
-	parser->currentToken = tokenize(parser);
+	parser->currentToken = tokenize(&parser->input);
 
 	if (parser->currentToken == NULL) {
 		return parser->result;
@@ -69,73 +68,57 @@ bool* jsonparser_get_bool(JsonElement* element) {
 
 // implementations
 
-JsonElement* new_json_element() {
+JsonElement* new_json_element(JsonType type) {
 	JsonElement* element = malloc(sizeof(JsonElement));
+	element->type = type;
 	element->objectValue = NULL;
 	element->arrayValue = NULL;
 	element->boolValue = NULL;
 	element->doubleValue = NULL;
 	element->intValue = NULL;
 	element->stringValue = NULL;
-	element->type = NOT_SET;
 	return element;
 }
 
 JsonElement* new_bool(bool value) {
-	JsonElement* element = new_json_element();
-	element->type = JSON_BOOL;
-
-	bool* boolval = malloc(sizeof(bool));
-	(*boolval) = value;
-
-	element->boolValue = boolval;
+	JsonElement* element = new_json_element(JSON_BOOL);
+	element->boolValue = malloc(sizeof(bool));
+	*(element->boolValue) = value;
 	return element;
 }
 
 JsonElement* new_string(string value) {
-	JsonElement* element = malloc(sizeof(JsonElement));
-	element->type = JSON_STRING;
+	JsonElement* element = new_json_element(JSON_STRING);
 	element->stringValue = value;
 	return element;
 }
 
 JsonElement* new_integer(string text) {
-	JsonElement* element = new_json_element();
-	element->type = JSON_INT;
-
+	JsonElement* element = new_json_element(JSON_INT);
 	long* longval = malloc(sizeof(long));
 	(*longval) = strtol(text, NULL, 10);
-
 	double* doubleval = malloc(sizeof(double));
 	(*doubleval) = (double)(*longval);
-
 	element->intValue = longval;
 	element->doubleValue = doubleval;
-
 	return element;
 }
 
 JsonElement* new_float(string text) {
-	JsonElement* element = new_json_element();
-	element->type = JSON_FLOAT;
-
-	double* doubleval = malloc(sizeof(double));
-	(*doubleval) = strtod(text, NULL);
-
-	element->doubleValue = doubleval;
+	JsonElement* element = new_json_element(JSON_FLOAT);
+	element->doubleValue = malloc(sizeof(double));
+	(*(element->doubleValue)) = strtod(text, NULL);
 	return element;
 }
 
 JsonElement* new_array() {
-	JsonElement* element = new_json_element();
-	element->type = JSON_ARRAY;
+	JsonElement* element = new_json_element(JSON_ARRAY);
 	element->arrayValue = list_init(sizeof(JsonElement), 0);
 	return element;
 }
 
 JsonElement* new_object() {
-	JsonElement* element = new_json_element();
-	element->type = JSON_OBJECT;
+	JsonElement* element = new_json_element(JSON_OBJECT);
 	element->objectValue = dict_init_dictionary(STRING);
 	return element;
 }
@@ -154,7 +137,7 @@ JsonElement* parse_literal(string text) {
 	}
 }
 
-JsonElement* parse_array(JsonParser* parser) { // needs to accept JsonParser*, not JsonToken*
+JsonElement* parse_array(JsonParser* parser) {
 	JsonElement* list = new_array();
 	JsonToken* token = next_token(parser);
 
@@ -198,6 +181,11 @@ JsonElement* parse_object(JsonParser* parser) {
 		JsonToken* separator = next_token(parser);
 		JsonToken* value = next_token(parser);
 
+		if (separator->type != COLON) {
+			printf("Invalid key/value separator detected: '%s'", separator->value);
+			return obj;
+		}
+
 		switch (value->type) {
 			case OPEN_BRACE:
 				dict_add_item(&obj->objectValue, key->value, parse_object(parser));
@@ -224,132 +212,7 @@ JsonElement* parse_object(JsonParser* parser) {
 	return obj;
 }
 
-JsonToken* get_token(JsonTokenType type, string value) {
-	JsonToken* token = malloc(sizeof(JsonToken));
-	token->type = type;
-	token->value = value;
-	token->next = NULL;
-	return token;
-}
-
 JsonToken* next_token(JsonParser* parser) {
 	parser->currentToken = parser->currentToken->next;
-	return parser->currentToken;
-}
-
-string get_identifier_value(JsonParser* parser) {
-	parser->i++;
-
-	size_t buffersize = 8;
-	size_t valuelen = 0;
-
-	string value = malloc(sizeof(char) * buffersize);
-	while (parser->input[parser->i] != '"' || parser->input[parser->i-1] == '\\') {
-		if (parser->i == parser->n) {
-			break;
-		}
-
-		if (valuelen == (buffersize - 1)) // save a spot for \0
-		{
-			buffersize = (int) (buffersize * 1.5);
-			value = realloc(value, buffersize);
-		}
-
-		value[valuelen++] = parser->input[parser->i];
-		parser->i++;
-	}
-
-	value[valuelen] = '\0';
-
-	return value;
-}
-
-string get_literal_value(JsonParser* parser) {
-	size_t buffersize = 8;
-	size_t valuelen = 0;
-
-	string literal = malloc(sizeof(char) * buffersize);
-	while (parser->input[parser->i] != ',' && parser->input[parser->i] != ']' && parser->input[parser->i] != '}') {
-		if (parser->i == parser->n) {
-			break;
-		}
-
-		if (valuelen == (buffersize - 1)) // save a spot for \0
-		{
-			buffersize = (int) (buffersize * 1.5);
-			literal = realloc(literal, buffersize);
-		}
-
-		literal[valuelen++] = parser->input[parser->i];
-		parser->i++;
-	}
-
-	// back up one so we can capture the ending token in the stream
-	parser->i -= 1;
-	literal[valuelen] = '\0';
-
-	return literal;
-}
-
-JsonToken* tokenize(JsonParser* parser) {
-	JsonToken* head = NULL;
-	JsonToken* prev = NULL;
-
-	while (parser->i < parser->n) {
-		JsonToken* token = NULL;
-
-		switch (parser->input[parser->i]) {
-			case ' ':
-			case '\t':
-			case '\n':
-				parser->i++;
-				continue;
-
-			case '{':
-				token = get_token(OPEN_BRACE, "{");
-				break;
-
-			case '}':
-				token = get_token(CLOSE_BRACE, "}");
-				break;
-
-			case '[':
-				token = get_token(OPEN_BRACKET, "[");
-				break;
-
-			case ']':
-				token = get_token(CLOSE_BRACKET, "]");
-				break;
-
-			case ',':
-				token = get_token(COMMA, ",");
-				break;
-
-			case ':':
-				token = get_token(COLON, ":");
-				break;
-
-			case '"':
-				token = get_token(IDENTIFIER, get_identifier_value(parser));
-				break;
-
-			default:
-				token = get_token(LITERAL, get_literal_value(parser));
-				break;
-		}
-
-		parser->i++;
-
-		if (head == NULL) {
-			head = token;
-			prev = head;
-		} else {
-			prev->next = token;
-			prev = prev->next;
-		}
-	}
-
-	parser->currentToken = head;
-
 	return parser->currentToken;
 }

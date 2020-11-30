@@ -5,23 +5,11 @@
 #ifndef LOCALUTILS_JSONPARSER_H
 #define LOCALUTILS_JSONPARSER_H
 
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
+#include "tokenizer.h"
 #include "../types/dict.h"
 #include "../types/list.h"
 #include "../types/types.h"
-
-typedef enum {
-	OPEN_BRACE,
-	CLOSE_BRACE,
-	OPEN_BRACKET,
-	CLOSE_BRACKET,
-	COLON,
-	COMMA,
-	IDENTIFIER,
-	LITERAL
-} JsonTokenType;
 
 typedef enum {
 	NOT_SET,
@@ -32,12 +20,6 @@ typedef enum {
 	JSON_INT,
 	JSON_FLOAT
 } JsonType;
-
-typedef struct JsonToken {
-	JsonTokenType type;
-	string value;
-	struct JsonToken* next;
-} JsonToken;
 
 typedef struct {
 	JsonType type;

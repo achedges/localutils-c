@@ -88,7 +88,7 @@ int test_json_object_parse(int verbose) {
 		return 1;
 	}
 
-	if (!jsonparser_get_bool(dict_get_node_value(objectDict, "bool"))) {
+	if (!(*jsonparser_get_bool(dict_get_node_value(objectDict, "bool")))) {
 		printf("Incorrect value found at [object][bool]\n");
 		return 1;
 	}
@@ -135,14 +135,14 @@ int test_json_object_parse(int verbose) {
 		return 1;
 	}
 
-	printf("test_json_object_parse() passed\n");
+	if (verbose) {
+		printf("test_json_object_parse() passed\n");
+	}
 
 	return 0;
 }
 
 int test_json_array_parse(int verbose) {
-	int failcnt = 0;
-
 	string jsonString = read_test_file("../tests/parse-array.json");
 
 	JsonParser* parser = jsonparser_init();
@@ -194,7 +194,9 @@ int test_json_array_parse(int verbose) {
 		}
 	}
 
-	printf("test_json_array_parse() passed\n");
+	if (verbose) {
+		printf("test_json_array_parse() passed\n");
+	}
 
 	return 0;
 }
