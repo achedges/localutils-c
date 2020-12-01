@@ -39,7 +39,7 @@ typedef struct {
 } JsonParser;
 
 JsonParser* jsonparser_init();
-JsonElement* jsonparser_parse(JsonParser* parser, const string input);
+JsonElement* jsonparser_parse(JsonParser* parser, string input);
 Dictionary* jsonparser_get_dict(JsonElement* element);
 List* jsonparser_get_list(JsonElement* element);
 string jsonparser_get_string(JsonElement* element);
