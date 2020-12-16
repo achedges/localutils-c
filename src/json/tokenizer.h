@@ -11,10 +11,10 @@
 #include "../types/types.h"
 
 typedef enum {
-	OPEN_BRACE,
-	CLOSE_BRACE,
-	OPEN_BRACKET,
-	CLOSE_BRACKET,
+	STARTOBJ,
+	ENDOBJ,
+	STARTARRAY,
+	ENDARRAY,
 	COLON,
 	COMMA,
 	IDENTIFIER,

@@ -85,19 +85,19 @@ JsonToken* tokenize(string* input_ptr) {
 				continue;
 
 			case '{':
-				token = init_token(OPEN_BRACE, "{");
+				token = init_token(STARTOBJ, "{");
 				break;
 
 			case '}':
-				token = init_token(CLOSE_BRACE, "}");
+				token = init_token(ENDOBJ, "}");
 				break;
 
 			case '[':
-				token = init_token(OPEN_BRACKET, "[");
+				token = init_token(STARTARRAY, "[");
 				break;
 
 			case ']':
-				token = init_token(CLOSE_BRACKET, "]");
+				token = init_token(ENDARRAY, "]");
 				break;
 
 			case ',':

@@ -31,9 +31,9 @@ JsonElement* jsonparser_parse(JsonParser* parser, string input) {
 		return parser->result;
 	}
 
-	if (parser->currentToken->type == OPEN_BRACKET) {
+	if (parser->currentToken->type == STARTARRAY) {
 		parser->result = parse_array(parser);
-	} else if (parser->currentToken->type == OPEN_BRACE) {
+	} else if (parser->currentToken->type == STARTOBJ) {
 		parser->result = parse_object(parser);
 	}
 
@@ -141,7 +141,7 @@ JsonElement* parse_array(JsonParser* parser) {
 	JsonElement* list = new_array();
 	JsonToken* token = next_token(parser);
 
-	while (token->type != CLOSE_BRACKET) {
+	while (token->type != ENDARRAY) {
 		switch (token->type) {
 			case IDENTIFIER:
 				list_append(list->arrayValue, new_string(token->value));
@@ -149,10 +149,10 @@ JsonElement* parse_array(JsonParser* parser) {
 			case LITERAL:
 				list_append(list->arrayValue, parse_literal(token->value));
 				break;
-			case OPEN_BRACE:
+			case STARTOBJ:
 				list_append(list->arrayValue, parse_object(parser));
 				break;
-			case OPEN_BRACKET:
+			case STARTARRAY:
 				list_append(list->arrayValue, parse_array(parser));
 				break;
 			default:
@@ -173,7 +173,7 @@ JsonElement* parse_object(JsonParser* parser) {
 	JsonElement* obj = new_object();
 	JsonToken* key = next_token(parser);
 
-	while (key->type != CLOSE_BRACE) {
+	while (key->type != ENDOBJ) {
 		if (key->type == COMMA) {
 			key = next_token(parser);
 		}
@@ -187,10 +187,10 @@ JsonElement* parse_object(JsonParser* parser) {
 		}
 
 		switch (value->type) {
-			case OPEN_BRACE:
+			case STARTOBJ:
 				dict_add_item(&obj->objectValue, key->value, parse_object(parser));
 				break;
-			case OPEN_BRACKET:
+			case STARTARRAY:
 				dict_add_item(&obj->objectValue, key->value, parse_array(parser));
 				break;
 			case IDENTIFIER:
